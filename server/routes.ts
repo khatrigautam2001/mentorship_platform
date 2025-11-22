@@ -69,8 +69,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         role: "mentor",
         name,
-        phone: phone || null,
-        photo: null,
+        phone: phone || "",
+        photo: "",
         mentorId: null,
         totalFee: null,
       });
@@ -145,10 +145,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         role: "mentee",
         name,
-        phone: phone || null,
-        photo: null,
+        phone: phone || "",
+        photo: "",
         mentorId: req.session.userId!,
-        totalFee,
+        totalFee: totalFee ? String(totalFee) : null,
       });
 
       // Create initial payment if provided
@@ -725,6 +725,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ ...user, password: undefined });
     } catch (error) {
       console.error("Update profile error:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Roadmap endpoints
+  app.get("/api/roadmap/global", async (req: Request, res: Response) => {
+    try {
+      const allSkills = await storage.getAllSkills();
+      const skillsWithItems = await Promise.all(
+        allSkills.map(async (skill) => {
+          const items = await storage.getRoadmapItemsBySkillId(skill.id);
+          return { ...skill, items };
+        })
+      );
+      res.json(skillsWithItems);
+    } catch (error) {
+      console.error("Get global roadmap error:", error);
+      res.status(500).json({ message: "Failed to get roadmap" });
+    }
+  });
+
+  app.post("/api/roadmap/skills", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { name, description } = req.body;
+      const allSkills = await storage.getAllSkills();
+      const newSkill = await storage.createSkill({
+        name,
+        description: description || null,
+        badgeIcon: null,
+        order: allSkills.length,
+      });
+      res.json(newSkill);
+    } catch (error) {
+      console.error("Create skill error:", error);
+      res.status(500).json({ message: "Failed to create skill" });
+    }
+  });
+
+  app.delete("/api/roadmap/skills/:id", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteSkill(id);
+      res.json({ message: "Skill deleted" });
+    } catch (error) {
+      console.error("Delete skill error:", error);
+      res.status(500).json({ message: "Failed to delete skill" });
+    }
+  });
+
+  app.post("/api/roadmap/items", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { skillId, title } = req.body;
+      const items = await storage.getRoadmapItemsBySkillId(skillId);
+      const newItem = await storage.createRoadmapItem({
+        skillId,
+        title,
+        order: items.length,
+        isMockInterview: false,
+      });
+      res.json(newItem);
+    } catch (error) {
+      console.error("Create item error:", error);
+      res.status(500).json({ message: "Failed to create item" });
+    }
+  });
+
+  app.delete("/api/roadmap/items/:id", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteRoadmapItem(id);
+      res.json({ message: "Item deleted" });
+    } catch (error) {
+      console.error("Delete item error:", error);
+      res.status(500).json({ message: "Failed to delete item" });
+    }
+  });
+
+  // Payment portfolio endpoint
+  app.get("/api/mentor/payment-portfolio", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const mentees = await storage.getMenteesByMentorId(req.session.userId!);
+      const portfolio = await Promise.all(
+        mentees.map(async (mentee) => {
+          const payments = await storage.getPaymentsByMenteeId(mentee.id);
+          const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
+          const totalFee = mentee.totalFee ? parseFloat(mentee.totalFee.toString()) : 0;
+          
+          return {
+            menteeId: mentee.id,
+            menteeName: mentee.name,
+            totalFee,
+            totalPaid,
+            remaining: totalFee - totalPaid,
+            lastPaymentDate: payments.length > 0 ? payments[0].date : null,
+          };
+        })
+      );
+      res.json(portfolio);
+    } catch (error) {
+      console.error("Get payment portfolio error:", error);
+      res.status(500).json({ message: "Failed to get payment portfolio" });
+    }
+  });
+
+  app.post("/api/mentor/add-payment", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId, amount, date, notes } = req.body;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      const payment = await storage.createPayment({
+        menteeId,
+        amount: String(parseFloat(amount)),
+        date: new Date(date),
+        notes: notes || "",
+      });
+
+      res.json(payment);
+    } catch (error) {
+      console.error("Add payment error:", error);
+      res.status(500).json({ message: "Failed to add payment" });
+    }
+  });
+
+  // Mentor profile endpoints
+  app.get("/api/mentor/profile", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ ...user, password: undefined });
+    } catch (error) {
+      console.error("Get mentor profile error:", error);
+      res.status(500).json({ message: "Failed to get profile" });
+    }
+  });
+
+  app.patch("/api/mentor/profile", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { name, phone, photo } = req.body;
+      
+      const user = await storage.updateUser(req.session.userId!, {
+        name,
+        phone: phone || null,
+        photo: photo || null,
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ ...user, password: undefined });
+    } catch (error) {
+      console.error("Update mentor profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
     }
   });

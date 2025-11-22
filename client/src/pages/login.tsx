@@ -32,7 +32,7 @@ export default function Login() {
   const loginMutation = useMutation({
     mutationFn: (data: LoginFormData) =>
       apiRequest("POST", "/api/auth/login", data),
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       if (data.user.role === "mentor") {
         setLocation("/mentor/overview");
@@ -119,9 +119,10 @@ export default function Login() {
               <div className="text-center">
                 <Button
                   type="button"
-                  variant="link"
+                  variant="ghost"
                   onClick={() => setLocation("/register")}
                   data-testid="link-register"
+                  className="text-sm h-auto p-0"
                 >
                   New mentor? Create an account
                 </Button>

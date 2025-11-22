@@ -160,9 +160,10 @@ export default function Register() {
               <div className="text-center">
                 <Button
                   type="button"
-                  variant="link"
+                  variant="ghost"
                   onClick={() => setLocation("/login")}
                   data-testid="link-login"
+                  className="text-sm h-auto p-0"
                 >
                   Already have an account? Sign in
                 </Button>

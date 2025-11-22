@@ -24,7 +24,7 @@ import {
   type InsertIndividualRoadmapItem,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -175,7 +175,7 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(mockInterviewRequests)
-      .where(eq(mockInterviewRequests.status, "pending"))
+      .where(inArray(mockInterviewRequests.menteeId, menteeIds))
       .orderBy(desc(mockInterviewRequests.requestedAt));
   }
 

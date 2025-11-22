@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Mail, Phone, DollarSign, Edit, Award } from "lucide-react";
+import { Plus, Mail, Phone, DollarSign, Edit, Award, Users } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -63,7 +63,7 @@ export default function MentorStudents() {
   const createMenteeMutation = useMutation({
     mutationFn: (data: CreateMenteeFormData) =>
       apiRequest("POST", "/api/mentor/create-mentee", data),
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/mentor/students"] });
       setGeneratedCredentials(data.credentials);
       reset();
