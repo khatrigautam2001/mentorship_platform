@@ -1,0 +1,76 @@
+Project Name
+Mentorship Progress Tracker Platform
+User Roles
+
+Mentor (called “Admin” in your notes) → Only person who can register himself
+Mentee (Student) → Cannot self-register → Account created only by Mentor
+
+Authentication
+
+Mentor: Self register + login
+Mentee: Created by Mentor → Receives auto-generated credentials (email + password)
+
+Core Learning Flow (Sequential Unlock – Exactly as you said)
+
+All skill titles and all item titles inside every skill are ALWAYS visible to the mentee
+Only the very first item of the very first skill is unlocked when the mentee logs in
+Mentee clicks “Mark as Complete” when they finish an item
+As soon as they mark current item complete → next item’s link becomes clickable (previous ones stay completed)
+No video watch-time tracking → purely honesty-based “Mark as Complete” button
+
+Mock Interview Gate (Skill Completion Gate)
+
+The last item of every skill is always “Mock Interview”
+When mentee clicks “Mark as Complete” on Mock Interview → it does NOT unlock the next skill automatically
+Instead, a request appears in Mentor’s dashboard (“Gokul has requested Excel skill completion”)
+Mentor takes the mock interview offline (Google Meet, phone, etc.)
+After the mock interview, Mentor clicks either: → Approve → Skill marked 100% complete + badge awarded + next skill unlocked → Reject → Mentee has to click “Mark as Complete” again later when ready
+
+Badges & Progress
+
+One badge per skill (e.g., Excel Master, SQL Master, Power BI Master, etc.)
+Badge appears in mentee’s Profile → Badges section only after Mentor approves the mock interview
+Mentee dashboard shows big progress percentage (calculated from total items across all skills)
+
+Roadmap Management (Very Important)
+Mentor can:
+
+Global Roadmap (affects ALL mentees)
+
+   * Add / Edit / Delete / Reorder any skill or any item inside a skill
+   * Changes instantly reflect for every mentee
+
+Individual Overrides
+
+   * Mentor opens a specific mentee’s profile
+   * Can customize that mentee’s roadmap differently (add/remove items only for this person)
+Mentor Dashboard Tabs
+
+Overview → Total mentees, total revenue collected, pending dues
+All Students → List + click to see individual progress + edit individual roadmap
+Pending Mock Requests → Approve / Reject buttons
+Global Roadmap → Master editor for all mentees
+Payments / Portfolio → Table showing: Student | Total Fee | Paid So Far | Due | Last Payment Date Mentor manually enters “Received ₹X” → updates both sides instantly Same due/payment info visible in mentee dashboard as well
+
+Payment Tracking (Manual – Mentor controlled)
+
+While creating a mentee account, Mentor must enter: – Total fee agreed (e.g., ₹25,000) – Initial amount received (e.g., ₹8,000)
+Later, Mentor can add more payments anytime
+Mentee sees: “You have paid ₹8,000 of ₹25,000 | Remaining: ₹17,000”
+Mentor sees full portfolio of all dues in one screen
+
+Profile Section
+Both Mentor & Mentee have editable profile (name, photo, phone, email, etc.)
+Future / Skippable for v1
+
+ATS-friendly resume builder inside “Resume Preparation” skill (can be added later)
+
+Exact List of Skills (default – mentor can change later)
+
+Excel
+SQL
+Power BI
+Resume Preparation
+Interview Tips & Tricks
+Profile Optimization
+Referrals
