@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, GripVertical, Award, ExternalLink, X } from "lucide-react";
+import { Plus, Trash2, Award, ExternalLink, X } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -35,8 +35,6 @@ interface SkillItem {
 
 export default function MentorRoadmap() {
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
-  const [draggedSkillId, setDraggedSkillId] = useState<string | null>(null);
   const [skillItems, setSkillItems] = useState<SkillItem[]>([]);
   const { toast } = useToast();
 
@@ -125,66 +123,6 @@ export default function MentorRoadmap() {
     },
   });
 
-  const reorderItemMutation = useMutation({
-    mutationFn: ({ itemId, order }: { itemId: string; order: number }) =>
-      apiRequest("PATCH", `/api/roadmap/items/${itemId}/reorder`, { order }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to reorder part",
-        description: error.message,
-      });
-    },
-  });
-
-  const reorderSkillMutation = useMutation({
-    mutationFn: ({ skillId, order }: { skillId: string; order: number }) =>
-      apiRequest("PATCH", `/api/roadmap/skills/${skillId}/reorder`, { order }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to reorder skill",
-        description: error.message,
-      });
-    },
-  });
-
-  const handleDragStartItem = (e: React.DragEvent, itemId: string) => {
-    setDraggedItemId(itemId);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragStartSkill = (e: React.DragEvent, skillId: string) => {
-    setDraggedSkillId(skillId);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  const handleDropItem = (e: React.DragEvent, targetItemId: string, targetItem: any) => {
-    e.preventDefault();
-    if (draggedItemId && draggedItemId !== targetItemId && skills) {
-      reorderItemMutation.mutate({ itemId: draggedItemId, order: targetItem.order });
-      setDraggedItemId(null);
-    }
-  };
-
-  const handleDropSkill = (e: React.DragEvent, targetSkillId: string, targetSkill: any) => {
-    e.preventDefault();
-    if (draggedSkillId && draggedSkillId !== targetSkillId && skills) {
-      reorderSkillMutation.mutate({ skillId: draggedSkillId, order: targetSkill.order });
-      setDraggedSkillId(null);
-    }
-  };
 
   const addItemToForm = () => {
     setSkillItems([...skillItems, { title: "", resourceUrl: "", order: skillItems.length }]);
@@ -345,18 +283,11 @@ export default function MentorRoadmap() {
       ) : skills && skills.length > 0 ? (
         <Accordion type="multiple" className="space-y-4">
           {skills.map((skill, skillIndex) => (
-            <Card
-              key={skill.id}
-              draggable
-              onDragStart={(e) => handleDragStartSkill(e, skill.id)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDropSkill(e, skill.id, skill)}
-            >
+            <Card key={skill.id}>
               <AccordionItem value={skill.id} className="border-0">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
-                      <GripVertical className="h-5 w-5 text-muted-foreground mt-1 cursor-move" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary">{skillIndex + 1}</Badge>
@@ -393,14 +324,9 @@ export default function MentorRoadmap() {
                         {skill.items.map((item, itemIndex) => (
                           <div
                             key={item.id}
-                            draggable
-                            onDragStart={(e) => handleDragStartItem(e, item.id)}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDropItem(e, item.id, item)}
-                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate cursor-move"
+                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate"
                           >
                             <div className="flex items-center gap-3 flex-1">
-                              <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
                               <Badge variant="outline" className="min-w-[2rem] justify-center">
                                 {itemIndex + 1}
                               </Badge>

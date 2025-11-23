@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, RotateCcw, ArrowLeft, GripVertical, Award, ExternalLink } from "lucide-react";
+import { Plus, Trash2, RotateCcw, ArrowLeft, Award, ExternalLink } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -38,18 +38,11 @@ export default function MentorStudentRoadmap() {
   const menteeId = params?.menteeId as string;
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { toast } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    watch,
-  } = useForm<AddItemFormData>({
+  const itemForm = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
     defaultValues: {
       isMockInterview: false,
@@ -134,45 +127,11 @@ export default function MentorStudentRoadmap() {
     },
   });
 
-  const reorderItemMutation = useMutation({
-    mutationFn: ({ itemId, order }: { itemId: string; order: number }) =>
-      apiRequest("PATCH", `/api/roadmap/individual/${menteeId}/items/${itemId}/reorder`, { order }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to reorder item",
-        description: error.message,
-      });
-    },
-  });
 
   const onSubmit = (data: AddItemFormData) => {
     addItemMutation.mutate(data);
   };
 
-  const handleDragStart = (e: React.DragEvent, itemId: string) => {
-    if (!isCustomRoadmap) return;
-    setDraggedItemId(itemId);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (!isCustomRoadmap) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  const handleDrop = (e: React.DragEvent, targetItemId: string, targetItem: any) => {
-    e.preventDefault();
-    if (!isCustomRoadmap) return;
-    if (draggedItemId && draggedItemId !== targetItemId && roadmap) {
-      reorderItemMutation.mutate({ itemId: draggedItemId, order: targetItem.order });
-      setDraggedItemId(null);
-    }
-  };
 
   const openAddItemForSkill = (skillId: string) => {
     setSelectedSkillId(skillId);
@@ -209,13 +168,13 @@ export default function MentorStudentRoadmap() {
                 Add a new part to this skill
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={itemForm.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="skillId">Skill</Label>
                 <select
                   id="skillId"
                   className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                  {...register("skillId")}
+                  {...itemForm.register("skillId")}
                   data-testid="select-skill"
                 >
                   <option value="">Select a skill</option>
@@ -225,8 +184,8 @@ export default function MentorStudentRoadmap() {
                     </option>
                   ))}
                 </select>
-                {errors.skillId && (
-                  <p className="text-sm text-destructive">{errors.skillId.message}</p>
+                {itemForm.formState.errors.skillId && (
+                  <p className="text-sm text-destructive">{itemForm.formState.errors.skillId.message}</p>
                 )}
               </div>
 
@@ -235,11 +194,11 @@ export default function MentorStudentRoadmap() {
                 <Input
                   id="title"
                   placeholder="Part title"
-                  {...register("title")}
+                  {...itemForm.register("title")}
                   data-testid="input-item-title"
                 />
-                {errors.title && (
-                  <p className="text-sm text-destructive">{errors.title.message}</p>
+                {itemForm.formState.errors.title && (
+                  <p className="text-sm text-destructive">{itemForm.formState.errors.title.message}</p>
                 )}
               </div>
 
@@ -248,7 +207,7 @@ export default function MentorStudentRoadmap() {
                 <Input
                   id="resourceUrl"
                   placeholder="https://example.com/resource"
-                  {...register("resourceUrl")}
+                  {...itemForm.register("resourceUrl")}
                   data-testid="input-item-resource-url"
                 />
               </div>
@@ -256,7 +215,7 @@ export default function MentorStudentRoadmap() {
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="isMockInterview"
-                  {...register("isMockInterview")}
+                  {...itemForm.register("isMockInterview")}
                   data-testid="checkbox-mock-interview"
                 />
                 <Label htmlFor="isMockInterview" className="font-normal cursor-pointer">
@@ -270,7 +229,7 @@ export default function MentorStudentRoadmap() {
                 disabled={addItemMutation.isPending}
                 data-testid="button-submit-item"
               >
-                {addItemMutation.isPending ? "Adding..." : "Add Item"}
+                {addItemMutation.isPending ? "Adding..." : "Add Part"}
               </Button>
             </form>
           </DialogContent>
@@ -345,15 +304,10 @@ export default function MentorStudentRoadmap() {
                         {skill.items.map((item, itemIndex) => (
                           <div
                             key={item.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, item.id)}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, item.id, item)}
-                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate cursor-move"
+                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate"
                             data-testid={`item-${item.id}`}
                           >
                             <div className="flex items-center gap-3 flex-1">
-                              <GripVertical className="h-4 w-4 text-muted-foreground" />
                               <Badge variant="outline" className="min-w-[2rem] justify-center">
                                 {itemIndex + 1}
                               </Badge>
