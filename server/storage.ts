@@ -6,14 +6,11 @@ import {
   mockInterviewRequests,
   badges,
   payments,
-  individualSkills,
   individualRoadmapItems,
   type User,
   type InsertUser,
   type Skill,
   type InsertSkill,
-  type IndividualSkill,
-  type InsertIndividualSkill,
   type RoadmapItem,
   type InsertRoadmapItem,
   type Progress,
@@ -69,16 +66,9 @@ export interface IStorage {
   getPaymentsByMenteeId(menteeId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
 
-  // Individual skill operations
-  getIndividualSkillsByMenteeId(menteeId: string): Promise<IndividualSkill[]>;
-  createIndividualSkill(skill: InsertIndividualSkill): Promise<IndividualSkill>;
-  updateIndividualSkill(id: string, updates: Partial<InsertIndividualSkill>): Promise<IndividualSkill | undefined>;
-  deleteIndividualSkill(id: string): Promise<void>;
-
   // Individual roadmap item operations
   getIndividualRoadmapItemsByMenteeId(menteeId: string): Promise<any[]>;
   createIndividualRoadmapItem(item: InsertIndividualRoadmapItem): Promise<any>;
-  updateIndividualRoadmapItem(id: string, updates: Partial<InsertIndividualRoadmapItem>): Promise<any>;
   deleteIndividualRoadmapItem(id: string): Promise<void>;
   deleteAllIndividualRoadmapItemsForMentee(menteeId: string): Promise<void>;
 
@@ -272,32 +262,6 @@ export class DatabaseStorage implements IStorage {
       .values(insertPayment)
       .returning();
     return payment;
-  }
-
-  // Individual skill operations
-  async getIndividualSkillsByMenteeId(menteeId: string): Promise<IndividualSkill[]> {
-    return db.select().from(individualSkills).where(eq(individualSkills.menteeId, menteeId)).orderBy(individualSkills.order);
-  }
-
-  async createIndividualSkill(insertSkill: InsertIndividualSkill): Promise<IndividualSkill> {
-    const [skill] = await db
-      .insert(individualSkills)
-      .values(insertSkill)
-      .returning();
-    return skill;
-  }
-
-  async updateIndividualSkill(id: string, updates: Partial<InsertIndividualSkill>): Promise<IndividualSkill | undefined> {
-    const [skill] = await db
-      .update(individualSkills)
-      .set(updates)
-      .where(eq(individualSkills.id, id))
-      .returning();
-    return skill || undefined;
-  }
-
-  async deleteIndividualSkill(id: string): Promise<void> {
-    await db.delete(individualSkills).where(eq(individualSkills.id, id));
   }
 
   // Individual roadmap item operations
