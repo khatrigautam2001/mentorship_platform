@@ -85,6 +85,7 @@ export default function MentorStudentRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setIsAddSkillOpen(false);
       skillForm.reset({ name: "", description: "" });
       toast({
@@ -112,6 +113,7 @@ export default function MentorStudentRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setIsEditSkillOpen(false);
       setEditSkillName("");
       setEditSkillDescription("");
@@ -136,6 +138,7 @@ export default function MentorStudentRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setDeleteConfirmSkillId(null);
       toast({
         title: "Skill deleted!",
@@ -164,6 +167,7 @@ export default function MentorStudentRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setIsAddItemOpen(false);
       setNewPartTitle("");
       setNewPartResourceUrl("");
@@ -192,6 +196,7 @@ export default function MentorStudentRoadmap() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setIsEditItemOpen(false);
       setEditItemTitle("");
       setEditItemResourceUrl("");
@@ -215,6 +220,7 @@ export default function MentorStudentRoadmap() {
       apiRequest("DELETE", `/api/roadmap/individual/${menteeId}/items/${itemId}` as string),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setDeleteConfirmItemId(null);
       toast({
         title: "Part deleted!",
@@ -236,6 +242,7 @@ export default function MentorStudentRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setShowResetConfirm(false);
       toast({
         title: "Roadmap reset!",

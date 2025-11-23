@@ -613,24 +613,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mentee routes
   app.get("/api/mentee/learning", requireMentee, async (req: Request, res: Response) => {
     try {
-      const skills = await storage.getAllSkills();
       const progressRecords = await storage.getProgressByMenteeId(req.session.userId!);
       const mockRequests = await storage.getMockInterviewRequestsByMenteeId(req.session.userId!);
 
       // Check if mentee has individual roadmap customization
       const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(req.session.userId!);
+      const individualSkills = await storage.getIndividualSkillsByMenteeId(req.session.userId!);
       
       let skillsWithItems;
-      if (individualItems.length > 0) {
-        // Use individual customized roadmap
+      if (individualItems.length > 0 || individualSkills.length > 0) {
+        // Return individual customized roadmap grouped by skill
+        const globalSkills = await storage.getAllSkills();
         skillsWithItems = await Promise.all(
-          skills.map(async (skill) => {
+          globalSkills.map(async (skill) => {
             const items = individualItems.filter(item => item.skillId === skill.id);
             return { ...skill, items };
           })
         );
+        
+        // Add custom individual skills
+        const individualSkillsWithItems = await Promise.all(
+          individualSkills.map(async (skill) => {
+            const items = await storage.getIndividualRoadmapItemsByMenteeId(req.session.userId!)
+              .then(allItems => allItems.filter(item => item.individualSkillId === skill.id));
+            return { ...skill, items };
+          })
+        );
+        
+        skillsWithItems = [...skillsWithItems, ...individualSkillsWithItems];
       } else {
         // Use global roadmap
+        const skills = await storage.getAllSkills();
         skillsWithItems = await Promise.all(
           skills.map(async (skill) => {
             const items = await storage.getRoadmapItemsBySkillId(skill.id);
