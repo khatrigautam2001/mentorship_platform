@@ -54,35 +54,6 @@ function generatePassword(): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
-    try {
-      const { name, email, phone, password } = req.body;
-      
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already registered" });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        role: "mentor",
-        name,
-        phone: phone || "",
-        photo: "",
-        mentorId: null,
-        totalFee: null,
-      });
-
-      req.session.userId = user.id;
-      res.json({ user: { ...user, password: undefined } });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Registration failed" });
-    }
-  });
-
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;

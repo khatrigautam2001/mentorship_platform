@@ -18,6 +18,8 @@ import { z } from "zod";
 import type { User } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
+import { Textarea } from "@/components/ui/textarea";
+import { format } from "date-fns";
 
 interface MenteeWithProgress extends User {
   progressPercentage: number;
@@ -35,14 +37,34 @@ const createMenteeSchema = z.object({
 
 type CreateMenteeFormData = z.infer<typeof createMenteeSchema>;
 
+interface PaymentPortfolioItem {
+  menteeId: string;
+  menteeName: string;
+  totalFee: number;
+  totalPaid: number;
+  remaining: number;
+  lastPaymentDate: string | null;
+}
+
+const addPaymentSchema = z.object({
+  menteeId: z.string(),
+  amount: z.string().min(1, "Amount is required"),
+  date: z.string(),
+  notes: z.string().optional(),
+});
+
+type AddPaymentFormData = z.infer<typeof addPaymentSchema>;
+
 export default function MentorStudents() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
   const [generatedCredentials, setGeneratedCredentials] = useState<{ email: string; password: string } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [expandedCredentials, setExpandedCredentials] = useState<string | null>(null);
   const [studentCredentials, setStudentCredentials] = useState<Record<string, { email: string; password: string }>>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState<string>("");
+  const [selectedPaymentMentee, setSelectedPaymentMentee] = useState<PaymentPortfolioItem | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -98,6 +120,30 @@ export default function MentorStudents() {
     },
   });
 
+  const addPaymentMutation = useMutation({
+    mutationFn: (data: AddPaymentFormData) =>
+      apiRequest("POST", "/api/mentor/add-payment", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mentor/students"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentor/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentor/payment-portfolio"] });
+      setIsAddPaymentOpen(false);
+      setSelectedPaymentMentee(null);
+      resetPayment();
+      toast({
+        title: "Payment recorded!",
+        description: "Payment has been added successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to add payment",
+        description: error.message,
+      });
+    },
+  });
+
   const { data: students, isLoading } = useQuery<MenteeWithProgress[]>({
     queryKey: ["/api/mentor/students"],
   });
@@ -115,6 +161,19 @@ export default function MentorStudents() {
       phone: "",
       totalFee: "",
       initialPayment: "",
+    },
+  });
+
+  const {
+    register: registerPayment,
+    handleSubmit: handlePaymentSubmit,
+    formState: { errors: paymentErrors },
+    reset: resetPayment,
+    setValue: setPaymentValue,
+  } = useForm<AddPaymentFormData>({
+    resolver: zodResolver(addPaymentSchema),
+    defaultValues: {
+      date: format(new Date(), "yyyy-MM-dd"),
     },
   });
 
@@ -433,10 +492,8 @@ export default function MentorStudents() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setLocation(`/mentor/students/${student.id}/roadmap`);
-                        }}
+                        disabled
+                        title="Individual roadmap customization coming soon"
                         data-testid={`button-edit-roadmap-${student.id}`}
                       >
                         <Edit className="h-4 w-4 mr-1" />
@@ -447,7 +504,16 @@ export default function MentorStudents() {
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setLocation(`/mentor/payments?student=${student.id}`);
+                          setSelectedPaymentMentee({
+                            menteeId: student.id,
+                            menteeName: student.name,
+                            totalFee: 0,
+                            totalPaid: 0,
+                            remaining: 0,
+                            lastPaymentDate: null,
+                          });
+                          setPaymentValue("menteeId", student.id);
+                          setIsAddPaymentOpen(true);
                         }}
                         data-testid={`button-add-payment-${student.id}`}
                       >
@@ -531,6 +597,66 @@ export default function MentorStudents() {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Payment</DialogTitle>
+            <DialogDescription>
+              Record a new payment from {selectedPaymentMentee?.menteeName}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePaymentSubmit((data) => addPaymentMutation.mutate(data))} className="space-y-4">
+            <input type="hidden" {...registerPayment("menteeId")} />
+            
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (₹)</Label>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="5000"
+                data-testid="input-payment-amount"
+                {...registerPayment("amount")}
+              />
+              {paymentErrors.amount && (
+                <p className="text-sm text-destructive">{paymentErrors.amount.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="date">Payment Date</Label>
+              <Input
+                id="date"
+                type="date"
+                data-testid="input-payment-date"
+                {...registerPayment("date")}
+              />
+              {paymentErrors.date && (
+                <p className="text-sm text-destructive">{paymentErrors.date.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Any additional notes..."
+                data-testid="input-payment-notes"
+                {...registerPayment("notes")}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={addPaymentMutation.isPending}
+              data-testid="button-submit-payment"
+            >
+              {addPaymentMutation.isPending ? "Recording..." : "Record Payment"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
