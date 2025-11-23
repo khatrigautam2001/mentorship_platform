@@ -52,6 +52,8 @@ export default function MentorRoadmap() {
   const [deleteConfirmItemId, setDeleteConfirmItemId] = useState<string | null>(null);
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+  const [draggedSkillId, setDraggedSkillId] = useState<string | null>(null);
+  const [dragOverSkillId, setDragOverSkillId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: skills, isLoading } = useQuery<SkillWithItems[]>({
@@ -245,6 +247,25 @@ export default function MentorRoadmap() {
     },
   });
 
+  const reorderSkillMutation = useMutation({
+    mutationFn: (data: { skillId: string; newOrder: number }) =>
+      apiRequest("PATCH", `/api/roadmap/skills/${data.skillId}/reorder`, { order: data.newOrder }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
+      setDraggedSkillId(null);
+      setDragOverSkillId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to reorder skill",
+        description: error.message,
+      });
+      setDraggedSkillId(null);
+      setDragOverSkillId(null);
+    },
+  });
+
   const addItemToForm = () => {
     setSkillItems([...skillItems, { title: "", resourceUrl: "", order: skillItems.length }]);
   };
@@ -404,13 +425,41 @@ export default function MentorRoadmap() {
       ) : skills && skills.length > 0 ? (
         <Accordion type="multiple" className="space-y-4">
           {skills.map((skill, skillIndex) => (
-            <Card key={skill.id}>
+            <Card
+              key={skill.id}
+              draggable
+              onDragStart={() => setDraggedSkillId(skill.id)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverSkillId(skill.id);
+              }}
+              onDragLeave={() => setDragOverSkillId(null)}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (draggedSkillId && draggedSkillId !== skill.id) {
+                  reorderSkillMutation.mutate({
+                    skillId: draggedSkillId,
+                    newOrder: skillIndex,
+                  });
+                }
+                setDraggedSkillId(null);
+                setDragOverSkillId(null);
+              }}
+              className={`transition-all cursor-grab active:cursor-grabbing ${
+                draggedSkillId === skill.id
+                  ? "opacity-50 bg-muted"
+                  : dragOverSkillId === skill.id
+                  ? "bg-accent/50 border-accent"
+                  : ""
+              }`}
+            >
               <AccordionItem value={skill.id} className="border-0">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
+                          <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <Badge variant="secondary">{skillIndex + 1}</Badge>
                           <AccordionTrigger className="hover:no-underline py-0">
                             <CardTitle className="text-lg" data-testid={`text-skill-${skill.id}`}>
