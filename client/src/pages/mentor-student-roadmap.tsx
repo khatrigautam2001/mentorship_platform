@@ -154,7 +154,7 @@ export default function MentorStudentRoadmap() {
   };
 
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
-    if (!isCustomRoadmap) return; // Disable drag when using global roadmap
+    if (!isCustomRoadmap) return;
     setDraggedItemId(itemId);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -165,11 +165,11 @@ export default function MentorStudentRoadmap() {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = (e: React.DragEvent, targetItemId: string, targetOrder: number) => {
+  const handleDrop = (e: React.DragEvent, targetItemId: string, targetItem: any) => {
     e.preventDefault();
     if (!isCustomRoadmap) return;
     if (draggedItemId && draggedItemId !== targetItemId && roadmap) {
-      reorderItemMutation.mutate({ itemId: draggedItemId, order: targetOrder });
+      reorderItemMutation.mutate({ itemId: draggedItemId, order: targetItem.order });
       setDraggedItemId(null);
     }
   };
@@ -348,10 +348,8 @@ export default function MentorStudentRoadmap() {
                             draggable
                             onDragStart={(e) => handleDragStart(e, item.id)}
                             onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, item.id, itemIndex)}
-                            className={`flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate cursor-move transition-opacity ${
-                              draggedItemId === item.id ? "opacity-50" : ""
-                            }`}
+                            onDrop={(e) => handleDrop(e, item.id, item)}
+                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate cursor-move"
                             data-testid={`item-${item.id}`}
                           >
                             <div className="flex items-center gap-3 flex-1">

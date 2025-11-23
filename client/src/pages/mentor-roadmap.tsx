@@ -170,18 +170,18 @@ export default function MentorRoadmap() {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDropItem = (e: React.DragEvent, targetItemId: string, targetOrder: number) => {
+  const handleDropItem = (e: React.DragEvent, targetItemId: string, targetItem: any) => {
     e.preventDefault();
     if (draggedItemId && draggedItemId !== targetItemId && skills) {
-      reorderItemMutation.mutate({ itemId: draggedItemId, order: targetOrder });
+      reorderItemMutation.mutate({ itemId: draggedItemId, order: targetItem.order });
       setDraggedItemId(null);
     }
   };
 
-  const handleDropSkill = (e: React.DragEvent, targetSkillId: string, targetOrder: number) => {
+  const handleDropSkill = (e: React.DragEvent, targetSkillId: string, targetSkill: any) => {
     e.preventDefault();
     if (draggedSkillId && draggedSkillId !== targetSkillId && skills) {
-      reorderSkillMutation.mutate({ skillId: draggedSkillId, order: targetOrder });
+      reorderSkillMutation.mutate({ skillId: draggedSkillId, order: targetSkill.order });
       setDraggedSkillId(null);
     }
   };
@@ -350,8 +350,7 @@ export default function MentorRoadmap() {
               draggable
               onDragStart={(e) => handleDragStartSkill(e, skill.id)}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDropSkill(e, skill.id, skillIndex)}
-              className={`transition-opacity ${draggedSkillId === skill.id ? "opacity-50" : ""}`}
+              onDrop={(e) => handleDropSkill(e, skill.id, skill)}
             >
               <AccordionItem value={skill.id} className="border-0">
                 <CardHeader className="pb-3">
@@ -397,10 +396,8 @@ export default function MentorRoadmap() {
                             draggable
                             onDragStart={(e) => handleDragStartItem(e, item.id)}
                             onDragOver={handleDragOver}
-                            onDrop={(e) => handleDropItem(e, item.id, itemIndex)}
-                            className={`flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate cursor-move transition-opacity ${
-                              draggedItemId === item.id ? "opacity-50" : ""
-                            }`}
+                            onDrop={(e) => handleDropItem(e, item.id, item)}
+                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate cursor-move"
                           >
                             <div className="flex items-center gap-3 flex-1">
                               <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
