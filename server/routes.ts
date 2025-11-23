@@ -872,17 +872,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(menteeId);
+      const individualSkills = await storage.getIndividualSkillsByMenteeId(menteeId);
       
-      if (individualItems.length > 0) {
+      if (individualItems.length > 0 || individualSkills.length > 0) {
         // Return individual customized roadmap grouped by skill
-        const skills = await storage.getAllSkills();
+        const globalSkills = await storage.getAllSkills();
         const skillsWithItems = await Promise.all(
-          skills.map(async (skill) => {
+          globalSkills.map(async (skill) => {
             const items = individualItems.filter(item => item.skillId === skill.id);
             return { ...skill, items };
           })
         );
-        res.json(skillsWithItems);
+        
+        // Add custom individual skills
+        const individualSkillsWithItems = await Promise.all(
+          individualSkills.map(async (skill) => {
+            const items = await storage.getIndividualRoadmapItemsByMenteeId(menteeId)
+              .then(allItems => allItems.filter(item => item.individualSkillId === skill.id));
+            return { ...skill, items };
+          })
+        );
+        
+        res.json([...skillsWithItems, ...individualSkillsWithItems]);
       } else {
         // Return global roadmap for this mentee
         const skills = await storage.getAllSkills();
