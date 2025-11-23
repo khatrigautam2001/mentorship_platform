@@ -32,14 +32,47 @@ export default function MenteeLearning() {
   const markCompleteMutation = useMutation({
     mutationFn: (itemId: string) =>
       apiRequest("POST", `/api/mentee/complete-item/${itemId}`, {}),
+    onMutate: (itemId: string) => {
+      // Cancel outgoing queries
+      queryClient.cancelQueries({ queryKey: ["/api/mentee/learning"] });
+
+      // Get current data
+      const previousData = queryClient.getQueryData<LearningData>(["/api/mentee/learning"]);
+
+      // Optimistically update the cache
+      if (previousData) {
+        const newProgress = [
+          ...previousData.progress,
+          { itemId, completed: true }
+        ];
+        
+        // Calculate new overall progress
+        const totalItems = previousData.skills.reduce((sum, skill) => sum + skill.items.length, 0);
+        const completedCount = newProgress.filter(p => p.completed).length;
+        const newOverallProgress = Math.round((completedCount / totalItems) * 100);
+
+        const optimisticData: LearningData = {
+          ...previousData,
+          progress: newProgress,
+          overallProgress: newOverallProgress,
+        };
+
+        queryClient.setQueryData(["/api/mentee/learning"], optimisticData);
+      }
+
+      return { previousData };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       toast({
         title: "Progress updated!",
         description: "Item marked as complete",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _itemId, context: any) => {
+      // Revert to previous data on error
+      if (context?.previousData) {
+        queryClient.setQueryData(["/api/mentee/learning"], context.previousData);
+      }
       toast({
         variant: "destructive",
         title: "Failed to update progress",
