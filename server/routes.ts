@@ -645,6 +645,8 @@
           );
           
           skillsWithItems = [...skillsWithItems, ...individualSkillsWithItems];
+          // Sort all skills by order
+          skillsWithItems.sort((a, b) => a.order - b.order);
         } else {
           // Use global roadmap
           const skills = await storage.getAllSkills();
@@ -654,6 +656,8 @@
               return { ...skill, items };
             })
           );
+          // Sort all skills by order
+          skillsWithItems.sort((a, b) => a.order - b.order);
         }
   
         // Calculate overall progress
@@ -914,7 +918,10 @@
             })
           );
           
-          res.json([...skillsWithItems, ...individualSkillsWithItems]);
+          // Merge all skills and sort by order
+          const allSkillsWithItems = [...skillsWithItems, ...individualSkillsWithItems];
+          allSkillsWithItems.sort((a, b) => a.order - b.order);
+          res.json(allSkillsWithItems);
         } else {
           // Return global roadmap for this mentee
           const skills = await storage.getAllSkills();
@@ -924,6 +931,7 @@
               return { ...skill, items };
             })
           );
+          skillsWithItems.sort((a, b) => a.order - b.order);
           res.json(skillsWithItems);
         }
       } catch (error) {
