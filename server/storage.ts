@@ -403,7 +403,8 @@ export class DatabaseStorage implements IStorage {
       if (isCustomSkill) {
         // For custom skills, reorder within that skill only
         const allItems = await db.select().from(individualRoadmapItems)
-          .where(eq(individualRoadmapItems.individualSkillId, individualItem.individualSkillId));
+          .where(eq(individualRoadmapItems.individualSkillId, individualItem.individualSkillId))
+          .orderBy(individualRoadmapItems.order);
         const oldOrder = individualItem.order;
         
         if (newOrder > oldOrder) {
@@ -420,7 +421,8 @@ export class DatabaseStorage implements IStorage {
       } else {
         // For global skills with individual customizations, reorder within that skill
         const allItems = await db.select().from(individualRoadmapItems)
-          .where(eq(individualRoadmapItems.skillId, individualItem.skillId));
+          .where(eq(individualRoadmapItems.skillId, individualItem.skillId))
+          .orderBy(individualRoadmapItems.order);
         const oldOrder = individualItem.order;
         
         if (newOrder > oldOrder) {
@@ -444,7 +446,8 @@ export class DatabaseStorage implements IStorage {
       
       // Check if there are already individual items for this skill
       const existingIndividualItems = await db.select().from(individualRoadmapItems)
-        .where(and(eq(individualRoadmapItems.skillId, globalItem.skillId), eq(individualRoadmapItems.menteeId, menteeId)));
+        .where(and(eq(individualRoadmapItems.skillId, globalItem.skillId), eq(individualRoadmapItems.menteeId, menteeId)))
+        .orderBy(individualRoadmapItems.order);
       
       if (existingIndividualItems.length === 0) {
         // Convert all global items of this skill to individual items
