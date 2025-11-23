@@ -143,6 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mentee = await storage.createUser({
         email,
         password: hashedPassword,
+        plainPassword: generatedPassword,
         role: "mentee",
         name,
         phone: phone || "",
@@ -162,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({
-        mentee: { ...mentee, password: undefined },
+        mentee: { ...mentee, password: undefined, plainPassword: undefined },
         credentials: {
           email: mentee.email,
           password: generatedPassword,
@@ -211,6 +212,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get students error:", error);
       res.status(500).json({ message: "Failed to get students" });
+    }
+  });
+
+  app.get("/api/mentor/students/:id/credentials", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const mentee = await storage.getUser(id);
+      
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      res.json({
+        email: mentee.email,
+        password: mentee.plainPassword || "Password not available",
+      });
+    } catch (error) {
+      console.error("Get credentials error:", error);
+      res.status(500).json({ message: "Failed to get credentials" });
     }
   });
 

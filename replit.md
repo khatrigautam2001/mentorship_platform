@@ -54,6 +54,8 @@ Preferred communication style: Simple, everyday language.
 1. **Users Table**: Stores both mentors and mentees with role differentiation
    - Mentees reference their assigned mentor via `mentorId`
    - Includes profile data (name, email, phone, photo) and fee tracking (`totalFee`)
+   - **plainPassword field**: Stores unencrypted mentee password for mentor access/login capability
+   - Hashed password stored separately for authentication
 
 2. **Skills Table**: Defines learning modules in the global roadmap
    - Ordered sequentially (`order` field)
@@ -167,6 +169,11 @@ Preferred communication style: Simple, everyday language.
 - `GET /badges`: Earned badges and available skills
 - `GET /profile`: Mentee profile with payment summary
 - `PATCH /profile`: Update mentee profile
+
+**Mentor Credential Management** (`/api/mentor/*`):
+- `GET /students/:id/credentials`: Retrieve mentee email and plain password for login access
+- When creating mentee: Password displayed once in success dialog with copy buttons
+- Mentors can view stored credentials anytime from All Students page
 
 **Roadmap Routes** (`/api/roadmap/*`):
 - `GET /global`: Retrieve global roadmap (skills with items)
