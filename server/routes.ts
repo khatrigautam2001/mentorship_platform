@@ -150,19 +150,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const mentees = await storage.getMenteesByMentorId(req.session.userId!);
       const allSkills = await storage.getAllSkills();
-      const allRoadmapItems = await storage.getAllRoadmapItems();
 
       const studentsWithProgress = await Promise.all(
         mentees.map(async (mentee) => {
           const progressRecords = await storage.getProgressByMenteeId(mentee.id);
           const badgesList = await storage.getBadgesByMenteeId(mentee.id);
           
+          // Check if mentee has individual roadmap customization
+          const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(mentee.id);
+          
+          let itemsToUse: any[];
+          if (individualItems.length > 0) {
+            // Use individual customized roadmap
+            itemsToUse = individualItems;
+          } else {
+            // Use global roadmap
+            itemsToUse = await storage.getAllRoadmapItems();
+          }
+          
           const completedItems = progressRecords.filter(p => p.completed).length;
-          const totalItems = allRoadmapItems.length;
+          const totalItems = itemsToUse.length;
           const progressPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-          // Find current skill
-          const nextIncomplete = allRoadmapItems.find(
+          // Find current skill - the first uncompleted item
+          const nextIncomplete = itemsToUse.find(
             item => !progressRecords.some(p => p.itemId === item.id && p.completed)
           );
           const currentSkill = nextIncomplete
