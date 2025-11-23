@@ -13,6 +13,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import MentorOverview from "@/pages/mentor-overview";
 import MentorStudents from "@/pages/mentor-students";
+import MentorStudentRoadmap from "@/pages/mentor-student-roadmap";
 import MentorRequests from "@/pages/mentor-requests";
 import MentorPayments from "@/pages/mentor-payments";
 import MentorRoadmap from "@/pages/mentor-roadmap";
@@ -112,6 +113,12 @@ function Router() {
       <Route path="/mentor/students">
         <DashboardLayout>
           <ProtectedRoute component={MentorStudents} requiredRole="mentor" />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/mentor/students/:menteeId/roadmap">
+        <DashboardLayout>
+          <ProtectedRoute component={MentorStudentRoadmap} requiredRole="mentor" />
         </DashboardLayout>
       </Route>
       

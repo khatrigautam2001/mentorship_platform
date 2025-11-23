@@ -65,6 +65,12 @@ export interface IStorage {
   // Payment operations
   getPaymentsByMenteeId(menteeId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
+
+  // Individual roadmap item operations
+  getIndividualRoadmapItemsByMenteeId(menteeId: string): Promise<any[]>;
+  createIndividualRoadmapItem(item: InsertIndividualRoadmapItem): Promise<any>;
+  deleteIndividualRoadmapItem(id: string): Promise<void>;
+  deleteAllIndividualRoadmapItemsForMentee(menteeId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -233,6 +239,27 @@ export class DatabaseStorage implements IStorage {
       .values(insertPayment)
       .returning();
     return payment;
+  }
+
+  // Individual roadmap item operations
+  async getIndividualRoadmapItemsByMenteeId(menteeId: string): Promise<any[]> {
+    return db.select().from(individualRoadmapItems).where(eq(individualRoadmapItems.menteeId, menteeId)).orderBy(individualRoadmapItems.order);
+  }
+
+  async createIndividualRoadmapItem(insertItem: InsertIndividualRoadmapItem): Promise<any> {
+    const [item] = await db
+      .insert(individualRoadmapItems)
+      .values(insertItem)
+      .returning();
+    return item;
+  }
+
+  async deleteIndividualRoadmapItem(id: string): Promise<void> {
+    await db.delete(individualRoadmapItems).where(eq(individualRoadmapItems.id, id));
+  }
+
+  async deleteAllIndividualRoadmapItemsForMentee(menteeId: string): Promise<void> {
+    await db.delete(individualRoadmapItems).where(eq(individualRoadmapItems.menteeId, menteeId));
   }
 }
 

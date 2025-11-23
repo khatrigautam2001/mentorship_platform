@@ -530,12 +530,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const progressRecords = await storage.getProgressByMenteeId(req.session.userId!);
       const mockRequests = await storage.getMockInterviewRequestsByMenteeId(req.session.userId!);
 
-      const skillsWithItems = await Promise.all(
-        skills.map(async (skill) => {
-          const items = await storage.getRoadmapItemsBySkillId(skill.id);
-          return { ...skill, items };
-        })
-      );
+      // Check if mentee has individual roadmap customization
+      const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(req.session.userId!);
+      
+      let skillsWithItems;
+      if (individualItems.length > 0) {
+        // Use individual customized roadmap
+        skillsWithItems = await Promise.all(
+          skills.map(async (skill) => {
+            const items = individualItems.filter(item => item.skillId === skill.id);
+            return { ...skill, items };
+          })
+        );
+      } else {
+        // Use global roadmap
+        skillsWithItems = await Promise.all(
+          skills.map(async (skill) => {
+            const items = await storage.getRoadmapItemsBySkillId(skill.id);
+            return { ...skill, items };
+          })
+        );
+      }
 
       // Calculate overall progress
       const allItems = skillsWithItems.flatMap(s => s.items);
@@ -809,6 +824,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Item deleted" });
     } catch (error) {
       console.error("Delete item error:", error);
+      res.status(500).json({ message: "Failed to delete item" });
+    }
+  });
+
+  // Individual roadmap customization endpoints
+  app.get("/api/roadmap/individual/:menteeId", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId } = req.params;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(menteeId);
+      
+      if (individualItems.length > 0) {
+        // Return individual customized roadmap grouped by skill
+        const skills = await storage.getAllSkills();
+        const skillsWithItems = await Promise.all(
+          skills.map(async (skill) => {
+            const items = individualItems.filter(item => item.skillId === skill.id);
+            return { ...skill, items };
+          })
+        );
+        res.json(skillsWithItems);
+      } else {
+        // Return global roadmap for this mentee
+        const skills = await storage.getAllSkills();
+        const skillsWithItems = await Promise.all(
+          skills.map(async (skill) => {
+            const items = await storage.getRoadmapItemsBySkillId(skill.id);
+            return { ...skill, items };
+          })
+        );
+        res.json(skillsWithItems);
+      }
+    } catch (error) {
+      console.error("Get individual roadmap error:", error);
+      res.status(500).json({ message: "Failed to get roadmap" });
+    }
+  });
+
+  app.post("/api/roadmap/individual/:menteeId/reset", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId } = req.params;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      await storage.deleteAllIndividualRoadmapItemsForMentee(menteeId);
+      res.json({ message: "Individual roadmap reset to global" });
+    } catch (error) {
+      console.error("Reset individual roadmap error:", error);
+      res.status(500).json({ message: "Failed to reset roadmap" });
+    }
+  });
+
+  app.post("/api/roadmap/individual/:menteeId/items", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId } = req.params;
+      const { skillId, title, order, isMockInterview } = req.body;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      const item = await storage.createIndividualRoadmapItem({
+        menteeId,
+        skillId,
+        title,
+        order,
+        isMockInterview: isMockInterview || false,
+      });
+
+      res.json(item);
+    } catch (error) {
+      console.error("Create individual item error:", error);
+      res.status(500).json({ message: "Failed to create item" });
+    }
+  });
+
+  app.delete("/api/roadmap/individual/:menteeId/items/:itemId", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId, itemId } = req.params;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      await storage.deleteIndividualRoadmapItem(itemId);
+      res.json({ message: "Item deleted" });
+    } catch (error) {
+      console.error("Delete individual item error:", error);
       res.status(500).json({ message: "Failed to delete item" });
     }
   });

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Mail, Phone, DollarSign, Award, Users, Copy, Check, Trash2 } from "lucide-react";
+import { Plus, Mail, Phone, DollarSign, Award, Users, Copy, Check, Trash2, Edit } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -488,27 +488,41 @@ export default function MentorStudents() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedPaymentMentee({
-                          menteeId: student.id,
-                          menteeName: student.name,
-                          totalFee: 0,
-                          totalPaid: 0,
-                          remaining: 0,
-                          lastPaymentDate: null,
-                        });
-                        setPaymentValue("menteeId", student.id);
-                        setIsAddPaymentOpen(true);
-                      }}
-                      data-testid={`button-add-payment-${student.id}`}
-                    >
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      Add Payment
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLocation(`/mentor/students/${student.id}/roadmap`);
+                        }}
+                        data-testid={`button-edit-roadmap-${student.id}`}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit Roadmap
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPaymentMentee({
+                            menteeId: student.id,
+                            menteeName: student.name,
+                            totalFee: 0,
+                            totalPaid: 0,
+                            remaining: 0,
+                            lastPaymentDate: null,
+                          });
+                          setPaymentValue("menteeId", student.id);
+                          setIsAddPaymentOpen(true);
+                        }}
+                        data-testid={`button-add-payment-${student.id}`}
+                      >
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        Add Payment
+                      </Button>
+                    </div>
                     <Button
                       size="sm"
                       variant="ghost"
