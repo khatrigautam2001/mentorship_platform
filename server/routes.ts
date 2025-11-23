@@ -915,6 +915,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Individual roadmap customization endpoints
+  app.get("/api/roadmap/individual/:menteeId/skills", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId } = req.params;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      const skills = await storage.getIndividualSkillsByMenteeId(menteeId);
+      res.json(skills);
+    } catch (error) {
+      console.error("Get individual skills error:", error);
+      res.status(500).json({ message: "Failed to get skills" });
+    }
+  });
+
   app.get("/api/roadmap/individual/:menteeId", requireMentor, async (req: Request, res: Response) => {
     try {
       const { menteeId } = req.params;
@@ -954,6 +972,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/roadmap/individual/:menteeId/skills", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId } = req.params;
+      const { name, description } = req.body;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      const skill = await storage.createIndividualSkill(menteeId, name, description);
+      res.json(skill);
+    } catch (error) {
+      console.error("Create individual skill error:", error);
+      res.status(500).json({ message: "Failed to create skill" });
+    }
+  });
+
+  app.patch("/api/roadmap/individual/:menteeId/skills/:skillId", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId, skillId } = req.params;
+      const { name, description } = req.body;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      const skill = await storage.updateIndividualSkill(skillId, { name, description });
+      res.json(skill);
+    } catch (error) {
+      console.error("Update individual skill error:", error);
+      res.status(500).json({ message: "Failed to update skill" });
+    }
+  });
+
+  app.delete("/api/roadmap/individual/:menteeId/skills/:skillId", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId, skillId } = req.params;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      await storage.deleteIndividualSkill(skillId);
+      res.json({ message: "Skill deleted" });
+    } catch (error) {
+      console.error("Delete individual skill error:", error);
+      res.status(500).json({ message: "Failed to delete skill" });
+    }
+  });
+
   app.post("/api/roadmap/individual/:menteeId/reset", requireMentor, async (req: Request, res: Response) => {
     try {
       const { menteeId } = req.params;
@@ -965,6 +1039,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.deleteAllIndividualRoadmapItemsForMentee(menteeId);
+      const individualSkills = await storage.getIndividualSkillsByMenteeId(menteeId);
+      for (const skill of individualSkills) {
+        await storage.deleteIndividualSkill(skill.id);
+      }
       res.json({ message: "Individual roadmap reset to global" });
     } catch (error) {
       console.error("Reset individual roadmap error:", error);
@@ -975,7 +1053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/roadmap/individual/:menteeId/items", requireMentor, async (req: Request, res: Response) => {
     try {
       const { menteeId } = req.params;
-      const { skillId, title, order, isMockInterview } = req.body;
+      const { skillId, individualSkillId, title, order, isMockInterview, resourceUrl } = req.body;
       
       // Verify mentee belongs to this mentor
       const mentee = await storage.getUser(menteeId);
@@ -985,10 +1063,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const item = await storage.createIndividualRoadmapItem({
         menteeId,
-        skillId,
+        skillId: skillId || null,
         title,
-        order,
+        order: order !== undefined ? order : 0,
         isMockInterview: isMockInterview || false,
+        individualSkillId: individualSkillId || null,
+        resourceUrl: resourceUrl || null,
       });
 
       res.json(item);

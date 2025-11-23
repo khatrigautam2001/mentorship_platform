@@ -6,6 +6,7 @@ import {
   mockInterviewRequests,
   badges,
   payments,
+  individualSkills,
   individualRoadmapItems,
   type User,
   type InsertUser,
@@ -66,11 +67,18 @@ export interface IStorage {
   getPaymentsByMenteeId(menteeId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
 
+  // Individual skill operations
+  getIndividualSkillsByMenteeId(menteeId: string): Promise<any[]>;
+  createIndividualSkill(menteeId: string, name: string, description?: string): Promise<any>;
+  updateIndividualSkill(id: string, updates: { name: string; description?: string }): Promise<any>;
+  deleteIndividualSkill(id: string): Promise<void>;
+
   // Individual roadmap item operations
   getIndividualRoadmapItemsByMenteeId(menteeId: string): Promise<any[]>;
   createIndividualRoadmapItem(item: InsertIndividualRoadmapItem): Promise<any>;
   deleteIndividualRoadmapItem(id: string): Promise<void>;
   deleteAllIndividualRoadmapItemsForMentee(menteeId: string): Promise<void>;
+  deleteIndividualRoadmapItemsBySkillId(menteeId: string, skillId: string): Promise<void>;
 
   // Reorder operations
   reorderRoadmapItem(itemId: string, newOrder: number): Promise<void>;
@@ -292,6 +300,48 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAllIndividualRoadmapItemsForMentee(menteeId: string): Promise<void> {
     await db.delete(individualRoadmapItems).where(eq(individualRoadmapItems.menteeId, menteeId));
+  }
+
+  async deleteIndividualRoadmapItemsBySkillId(menteeId: string, skillId: string): Promise<void> {
+    await db.delete(individualRoadmapItems).where(
+      and(eq(individualRoadmapItems.menteeId, menteeId), eq(individualRoadmapItems.skillId, skillId))
+    );
+  }
+
+  // Individual skill operations
+  async getIndividualSkillsByMenteeId(menteeId: string): Promise<any[]> {
+    return db.select().from(individualSkills).where(eq(individualSkills.menteeId, menteeId)).orderBy(individualSkills.order);
+  }
+
+  async createIndividualSkill(menteeId: string, name: string, description?: string): Promise<any> {
+    const existingSkills = await db.select().from(individualSkills).where(eq(individualSkills.menteeId, menteeId));
+    const [skill] = await db
+      .insert(individualSkills)
+      .values({
+        menteeId,
+        name,
+        description: description || null,
+        order: existingSkills.length,
+      })
+      .returning();
+    return skill;
+  }
+
+  async updateIndividualSkill(id: string, updates: { name: string; description?: string }): Promise<any> {
+    const [skill] = await db
+      .update(individualSkills)
+      .set(updates)
+      .where(eq(individualSkills.id, id))
+      .returning();
+    return skill || undefined;
+  }
+
+  async deleteIndividualSkill(id: string): Promise<void> {
+    const [skill] = await db.select().from(individualSkills).where(eq(individualSkills.id, id));
+    if (skill) {
+      await db.delete(individualRoadmapItems).where(eq(individualRoadmapItems.individualSkillId, id));
+      await db.delete(individualSkills).where(eq(individualSkills.id, id));
+    }
   }
 
   async reorderRoadmapItem(itemId: string, newOrder: number): Promise<void> {
