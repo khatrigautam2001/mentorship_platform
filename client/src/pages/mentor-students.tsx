@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Mail, Phone, DollarSign, Edit, Award, Users } from "lucide-react";
+import { Plus, Mail, Phone, DollarSign, Edit, Award, Users, Copy, Check } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -37,8 +37,15 @@ type CreateMenteeFormData = z.infer<typeof createMenteeSchema>;
 export default function MentorStudents() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [generatedCredentials, setGeneratedCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const { data: students, isLoading } = useQuery<MenteeWithProgress[]>({
     queryKey: ["/api/mentor/students"],
@@ -110,19 +117,49 @@ export default function MentorStudents() {
             </DialogHeader>
             {generatedCredentials ? (
               <div className="space-y-4">
-                <div className="rounded-lg bg-muted p-4 space-y-2">
-                  <p className="text-sm font-medium">Account Created Successfully!</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="rounded-lg border-2 border-green-500 bg-green-50 dark:bg-green-950 p-4 space-y-3">
+                  <p className="text-sm font-bold text-green-900 dark:text-green-100">✓ Account Created Successfully!</p>
+                  <p className="text-sm text-green-800 dark:text-green-200">
                     Share these credentials with the student:
                   </p>
-                  <div className="space-y-1 mt-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Email:</span>
-                      <span className="text-sm font-mono font-medium">{generatedCredentials.email}</span>
+                  <div className="space-y-2 mt-3">
+                    <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-900 p-2 rounded">
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">Email</span>
+                        <span className="text-sm font-mono font-medium">{generatedCredentials.email}</span>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(generatedCredentials.email, 'email')}
+                        data-testid="button-copy-email"
+                        className="h-8 w-8"
+                      >
+                        {copiedField === 'email' ? (
+                          <Check className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Password:</span>
-                      <span className="text-sm font-mono font-medium">{generatedCredentials.password}</span>
+                    <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-900 p-2 rounded">
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">Password</span>
+                        <span className="text-sm font-mono font-medium">{generatedCredentials.password}</span>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(generatedCredentials.password, 'password')}
+                        data-testid="button-copy-password"
+                        className="h-8 w-8"
+                      >
+                        {copiedField === 'password' ? (
+                          <Check className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
