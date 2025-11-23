@@ -160,12 +160,13 @@ export default function MentorStudentRoadmap() {
     mutationFn: async () => {
       if (!selectedSkill) throw new Error("No skill selected");
       const isIndividualSkill = (selectedSkill as any).menteeId !== undefined;
+      const nextOrder = selectedSkill.items?.length || 0;
       return apiRequest("POST", `/api/roadmap/individual/${menteeId}/items`, {
         skillId: isIndividualSkill ? null : selectedSkill.id,
         individualSkillId: isIndividualSkill ? selectedSkill.id : null,
         title: newPartTitle,
         resourceUrl: newPartResourceUrl || null,
-        order: 0,
+        order: nextOrder,
       });
     },
     onSuccess: () => {
