@@ -506,8 +506,6 @@ export class DatabaseStorage implements IStorage {
         .where(eq(individualSkills.menteeId, menteeId))
         .orderBy(individualSkills.order);
       
-      const oldOrder = individualSkill.order;
-      
       // Build new order: remove from old position, insert at new position
       const skillsWithoutDragged = allIndividualSkills.filter(s => s.id !== skillId);
       const reorderedSkills = [
@@ -521,71 +519,68 @@ export class DatabaseStorage implements IStorage {
         await db.update(individualSkills).set({ order: i }).where(eq(individualSkills.id, reorderedSkills[i].id));
       }
     } else {
-      // It's a global skill, need to get all skills (global + individual) for this mentee and reorder
-      const globalSkills = await storage.getAllSkills();
+      // It's a global skill - check if we already have individual items for this skill
+      const existingIndividualItems = await db.select().from(individualRoadmapItems)
+        .where(and(
+          eq(individualRoadmapItems.menteeId, menteeId),
+          eq(individualRoadmapItems.skillId, skillId)
+        ));
+      
       const menteeIndividualSkills = await db.select().from(individualSkills)
         .where(eq(individualSkills.menteeId, menteeId))
         .orderBy(individualSkills.order);
       
-      // Check which global skills have individual items
-      const individualItems = await db.select().from(individualRoadmapItems)
-        .where(eq(individualRoadmapItems.menteeId, menteeId));
-      const globalSkillsWithIndividualItems = new Set(individualItems.map(item => item.skillId).filter(Boolean));
-      
-      // Create a combined list of all skills visible to this mentee
-      const allSkillsForMentee = [
-        ...globalSkills.map(skill => ({ ...skill, isIndividual: false, menteeId })),
-        ...menteeIndividualSkills.map(skill => ({ ...skill, isIndividual: true })),
-      ];
-      
-      // Find the global skill being moved
-      const skillToMove = allSkillsForMentee.find(s => s.id === skillId);
-      if (!skillToMove) throw new Error("Skill not found");
-      
-      // If moving a global skill to a custom position, create an individual wrapper for it
-      if (!skillToMove.isIndividual) {
-        // Check if we already have this skill customized
-        const existingCustom = menteeIndividualSkills.find(s => s.name === skillToMove.name);
-        if (existingCustom) {
-          // Use existing custom skill
-          // Reorder it
+      if (existingIndividualItems.length > 0) {
+        // We already have an individual skill wrapper for this global skill - just reorder it
+        const individualSkillWrapper = await db.select().from(individualSkills)
+          .where(eq(individualSkills.id, existingIndividualItems[0].individualSkillId));
+        
+        if (individualSkillWrapper.length > 0) {
+          const wrapperSkill = individualSkillWrapper[0];
+          
+          // Reorder the wrapper skill
+          const skillsWithoutDragged = menteeIndividualSkills.filter(s => s.id !== wrapperSkill.id);
           const reorderedSkills = [
-            ...menteeIndividualSkills.filter(s => s.id !== existingCustom.id).slice(0, newOrder),
-            existingCustom,
-            ...menteeIndividualSkills.filter(s => s.id !== existingCustom.id).slice(newOrder),
+            ...skillsWithoutDragged.slice(0, newOrder),
+            wrapperSkill,
+            ...skillsWithoutDragged.slice(newOrder),
           ];
           
           for (let i = 0; i < reorderedSkills.length; i++) {
             await db.update(individualSkills).set({ order: i }).where(eq(individualSkills.id, reorderedSkills[i].id));
           }
-        } else {
-          // Create a new individual skill as a wrapper
-          const [newIndividualSkill] = await db.insert(individualSkills).values({
+        }
+      } else {
+        // First time reordering this global skill - create an individual wrapper
+        const globalSkill = await storage.getSkillById(skillId);
+        if (!globalSkill) throw new Error("Global skill not found");
+        
+        // Create a new individual skill wrapper
+        const [newIndividualSkill] = await db.insert(individualSkills).values({
+          menteeId,
+          name: globalSkill.name,
+          description: globalSkill.description,
+          order: newOrder,
+        }).returning();
+        
+        // Convert all global items of this skill to individual items (only once)
+        const globalItems = await storage.getRoadmapItemsBySkillId(skillId);
+        for (let i = 0; i < globalItems.length; i++) {
+          await db.insert(individualRoadmapItems).values({
             menteeId,
-            name: skillToMove.name,
-            description: skillToMove.description,
-            order: newOrder,
-          }).returning();
-          
-          // Convert all global items of this skill to individual items
-          const globalItems = await storage.getRoadmapItemsBySkillId(skillToMove.id);
-          for (let i = 0; i < globalItems.length; i++) {
-            await db.insert(individualRoadmapItems).values({
-              menteeId,
-              skillId: skillToMove.id,
-              individualSkillId: newIndividualSkill.id,
-              title: globalItems[i].title,
-              resourceUrl: globalItems[i].resourceUrl,
-              isMockInterview: globalItems[i].isMockInterview,
-              order: i,
-            });
-          }
-          
-          // Update other individual skills' orders
-          const otherSkills = menteeIndividualSkills.slice(newOrder);
-          for (let i = 0; i < otherSkills.length; i++) {
-            await db.update(individualSkills).set({ order: newOrder + 1 + i }).where(eq(individualSkills.id, otherSkills[i].id));
-          }
+            skillId: skillId,
+            individualSkillId: newIndividualSkill.id,
+            title: globalItems[i].title,
+            resourceUrl: globalItems[i].resourceUrl,
+            isMockInterview: globalItems[i].isMockInterview,
+            order: i,
+          });
+        }
+        
+        // Update other individual skills' orders to shift them down
+        const otherSkills = menteeIndividualSkills.slice(newOrder);
+        for (let i = 0; i < otherSkills.length; i++) {
+          await db.update(individualSkills).set({ order: newOrder + 1 + i }).where(eq(individualSkills.id, otherSkills[i].id));
         }
       }
     }
