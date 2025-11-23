@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Clock, Map, DollarSign, User, Award, BookOpen } from "lucide-react";
+import { LayoutDashboard, Users, Clock, Map, DollarSign, User, Award, BookOpen, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { User as UserType } from "@shared/schema";
 
 const mentorMenuItems = [
@@ -31,8 +33,27 @@ const menteeMenuItems = [
 ];
 
 export function AppSidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { data: user } = useQuery<UserType>({ queryKey: ["/api/auth/me"] });
+  const { toast } = useToast();
+
+  const logoutMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/auth/logout", {}),
+    onSuccess: () => {
+      setLocation("/login");
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: error.message,
+      });
+    },
+  });
 
   const menuItems = user?.role === "mentor" ? mentorMenuItems : menteeMenuItems;
 
@@ -75,20 +96,33 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4">
-        <Link href={user?.role === "mentor" ? "/mentor/profile" : "/mentee/profile"}>
-          <div className="flex items-center gap-3 rounded-md p-2 hover-elevate" data-testid="button-profile">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user?.photo || undefined} />
-              <AvatarFallback className="text-sm">
-                {user?.name?.charAt(0)?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role || "Loading..."}</p>
+        <div className="space-y-2">
+          <Link href={user?.role === "mentor" ? "/mentor/profile" : "/mentee/profile"}>
+            <div className="flex items-center gap-3 rounded-md p-2 hover-elevate" data-testid="button-profile">
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user?.photo || undefined} />
+                <AvatarFallback className="text-sm">
+                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
+                <p className="text-xs text-muted-foreground capitalize">{user?.role || "Loading..."}</p>
+              </div>
             </div>
-          </div>
-        </Link>
+          </Link>
+          {user?.role === "mentee" && (
+            <button
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+              className="w-full flex items-center gap-3 rounded-md p-2 hover-elevate text-sm text-muted-foreground hover:text-foreground"
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </button>
+          )}
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

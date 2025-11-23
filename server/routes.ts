@@ -521,7 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/roadmap/items", requireMentor, async (req: Request, res: Response) => {
     try {
-      const { skillId, title } = req.body;
+      const { skillId, title, resourceUrl } = req.body;
       
       const existingItems = await storage.getRoadmapItemsBySkillId(skillId);
       const maxOrder = existingItems.length > 0 ? Math.max(...existingItems.map(i => i.order)) : -1;
@@ -531,6 +531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title,
         order: maxOrder + 1,
         isMockInterview: false,
+        resourceUrl: resourceUrl || null,
       });
 
       res.json(item);

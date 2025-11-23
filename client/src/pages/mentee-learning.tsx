@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Lock, Play, Award as AwardIcon, Clock } from "lucide-react";
+import { Check, Lock, Play, Award as AwardIcon, Clock, ExternalLink } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -188,7 +188,19 @@ export default function MenteeLearning() {
                                 </div>
                                 
                                 {unlocked && !completed && (
-                                  <div>
+                                  <div className="flex items-center gap-2">
+                                    {item.resourceUrl && (
+                                      <a href={item.resourceUrl} target="_blank" rel="noopener noreferrer">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          data-testid={`button-resource-${item.id}`}
+                                        >
+                                          <ExternalLink className="h-4 w-4 mr-1" />
+                                          Start
+                                        </Button>
+                                      </a>
+                                    )}
                                     {item.isMockInterview ? (
                                       mockStatus === "pending" ? (
                                         <Badge variant="secondary">

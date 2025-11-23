@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, GripVertical, Award } from "lucide-react";
+import { Plus, Trash2, GripVertical, Award, ExternalLink } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ const addSkillSchema = z.object({
 const addItemSchema = z.object({
   skillId: z.string(),
   title: z.string().min(2, "Item title must be at least 2 characters"),
+  resourceUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type AddSkillFormData = z.infer<typeof addSkillSchema>;
@@ -50,7 +51,7 @@ export default function MentorRoadmap() {
 
   const itemForm = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
-    defaultValues: { title: "" },
+    defaultValues: { title: "", resourceUrl: "" },
   });
 
   const addSkillMutation = useMutation({
@@ -279,6 +280,11 @@ export default function MentorRoadmap() {
                                   Mock Interview
                                 </Badge>
                               )}
+                              {item.resourceUrl && (
+                                <a href={item.resourceUrl} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                                </a>
+                              )}
                             </div>
                             <Button
                               size="sm"
@@ -340,6 +346,19 @@ export default function MentorRoadmap() {
               />
               {itemForm.formState.errors.title && (
                 <p className="text-sm text-destructive">{itemForm.formState.errors.title.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resourceUrl">Resource URL (Optional)</Label>
+              <Input
+                id="resourceUrl"
+                placeholder="https://example.com/resource"
+                data-testid="input-item-resource-url"
+                {...itemForm.register("resourceUrl")}
+              />
+              {itemForm.formState.errors.resourceUrl && (
+                <p className="text-sm text-destructive">{itemForm.formState.errors.resourceUrl.message}</p>
               )}
             </div>
 
