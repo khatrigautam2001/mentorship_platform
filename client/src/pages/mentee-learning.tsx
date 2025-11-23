@@ -63,6 +63,7 @@ export default function MenteeLearning() {
       return { previousData };
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       toast({
         title: "Progress updated!",
         description: "Item marked as complete",
