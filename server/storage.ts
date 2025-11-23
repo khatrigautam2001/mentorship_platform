@@ -277,6 +277,15 @@ export class DatabaseStorage implements IStorage {
     return item;
   }
 
+  async updateIndividualRoadmapItem(id: string, updates: Partial<InsertIndividualRoadmapItem>): Promise<any> {
+    const [item] = await db
+      .update(individualRoadmapItems)
+      .set(updates)
+      .where(eq(individualRoadmapItems.id, id))
+      .returning();
+    return item || undefined;
+  }
+
   async deleteIndividualRoadmapItem(id: string): Promise<void> {
     await db.delete(individualRoadmapItems).where(eq(individualRoadmapItems.id, id));
   }

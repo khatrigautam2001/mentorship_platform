@@ -998,6 +998,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/roadmap/individual/:menteeId/items/:itemId", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId, itemId } = req.params;
+      const { title, resourceUrl } = req.body;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      const item = await storage.updateIndividualRoadmapItem(itemId, {
+        title,
+        resourceUrl: resourceUrl || null,
+      });
+      
+      res.json(item);
+    } catch (error) {
+      console.error("Update individual item error:", error);
+      res.status(500).json({ message: "Failed to update item" });
+    }
+  });
+
   app.delete("/api/roadmap/individual/:menteeId/items/:itemId", requireMentor, async (req: Request, res: Response) => {
     try {
       const { menteeId, itemId } = req.params;

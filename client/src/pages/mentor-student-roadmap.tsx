@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, RotateCcw, ArrowLeft, Award, ExternalLink, GripVertical } from "lucide-react";
+import { Plus, Trash2, RotateCcw, ArrowLeft, Award, ExternalLink, GripVertical, Pencil } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -37,9 +37,13 @@ export default function MentorStudentRoadmap() {
   const [, setLocation] = useLocation();
   const menteeId = params?.menteeId as string;
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isEditItemOpen, setIsEditItemOpen] = useState(false);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [editItemTitle, setEditItemTitle] = useState("");
+  const [editItemResourceUrl, setEditItemResourceUrl] = useState("");
   const { toast } = useToast();
 
   const itemForm = useForm<AddItemFormData>({
@@ -72,16 +76,44 @@ export default function MentorStudentRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       setIsAddItemOpen(false);
-      reset();
+      itemForm.reset();
       toast({
-        title: "Item added!",
-        description: "New item has been added to the roadmap",
+        title: "Part added!",
+        description: "New part has been added to the roadmap",
       });
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "Failed to add item",
+        title: "Failed to add part",
+        description: error.message,
+      });
+    },
+  });
+
+  const editItemMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedItem) throw new Error("No part selected");
+      return apiRequest("PATCH", `/api/roadmap/individual/${menteeId}/items/${selectedItem.id}`, {
+        title: editItemTitle,
+        resourceUrl: editItemResourceUrl || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      setIsEditItemOpen(false);
+      setEditItemTitle("");
+      setEditItemResourceUrl("");
+      setSelectedItem(null);
+      toast({
+        title: "Part updated!",
+        description: "Part has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to update part",
         description: error.message,
       });
     },
@@ -94,14 +126,14 @@ export default function MentorStudentRoadmap() {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       setDeleteConfirmId(null);
       toast({
-        title: "Item deleted!",
-        description: "Item has been removed from the roadmap",
+        title: "Part deleted!",
+        description: "Part has been removed from the roadmap",
       });
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "Failed to delete item",
+        title: "Failed to delete part",
         description: error.message,
       });
     },
@@ -127,11 +159,9 @@ export default function MentorStudentRoadmap() {
     },
   });
 
-
   const onSubmit = (data: AddItemFormData) => {
     addItemMutation.mutate(data);
   };
-
 
   const openAddItemForSkill = (skillId: string) => {
     setSelectedSkillId(skillId);
@@ -160,70 +190,6 @@ export default function MentorStudentRoadmap() {
       </div>
 
       <div className="flex gap-2">
-        <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
-          <DialogContent className="max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
-            <DialogHeader>
-              <DialogTitle>Add Part</DialogTitle>
-              <DialogDescription>
-                Add a new part to this skill
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={itemForm.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="skillId">Skill</Label>
-                <select
-                  id="skillId"
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                  {...itemForm.register("skillId")}
-                  data-testid="select-skill"
-                >
-                  <option value="">Select a skill</option>
-                  {allSkills?.map((skill) => (
-                    <option key={skill.id} value={skill.id}>
-                      {skill.name}
-                    </option>
-                  ))}
-                </select>
-                {itemForm.formState.errors.skillId && (
-                  <p className="text-sm text-destructive">{itemForm.formState.errors.skillId.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="title">Part Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Part title"
-                  {...itemForm.register("title")}
-                  data-testid="input-item-title"
-                />
-                {itemForm.formState.errors.title && (
-                  <p className="text-sm text-destructive">{itemForm.formState.errors.title.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resourceUrl">Resource URL (Optional)</Label>
-                <Input
-                  id="resourceUrl"
-                  placeholder="https://example.com/resource"
-                  {...itemForm.register("resourceUrl")}
-                  data-testid="input-item-resource-url"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={addItemMutation.isPending}
-                data-testid="button-submit-item"
-              >
-                {addItemMutation.isPending ? "Adding..." : "Add Part"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-
         <Button
           variant="outline"
           onClick={() => setShowResetConfirm(true)}
@@ -309,20 +275,40 @@ export default function MentorStudentRoadmap() {
                                   Mock Interview
                                 </Badge>
                               )}
+                              {item.resourceUrl && (
+                                <a href={item.resourceUrl} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                                </a>
+                              )}
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setDeleteConfirmId(item.id)}
-                              data-testid={`button-delete-item-${item.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setSelectedItem(item);
+                                  setEditItemTitle(item.title);
+                                  setEditItemResourceUrl(item.resourceUrl || "");
+                                  setIsEditItemOpen(true);
+                                }}
+                                data-testid={`button-edit-item-${item.id}`}
+                              >
+                                <Pencil className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setDeleteConfirmId(item.id)}
+                                data-testid={`button-delete-item-${item.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No items in this skill</p>
+                      <p className="text-sm text-muted-foreground">No parts in this skill</p>
                     )}
                   </CardContent>
                 </AccordionContent>
@@ -335,24 +321,142 @@ export default function MentorStudentRoadmap() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <h3 className="text-lg font-medium mb-2">No custom roadmap yet</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              This student is using the global roadmap. Add custom items to create a personalized path.
+              This student is using the global roadmap. Add custom parts to create a personalized path.
             </p>
             <Button onClick={() => setIsAddItemOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Item
+              Add Part
             </Button>
           </CardContent>
         </Card>
       )}
+
+      {/* Add Part Dialog */}
+      <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
+        <DialogContent className="max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Add Part</DialogTitle>
+            <DialogDescription>
+              Add a new part to this skill
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={itemForm.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="skillId">Skill</Label>
+              <select
+                id="skillId"
+                className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                {...itemForm.register("skillId")}
+                data-testid="select-skill"
+              >
+                <option value="">Select a skill</option>
+                {allSkills?.map((skill) => (
+                  <option key={skill.id} value={skill.id}>
+                    {skill.name}
+                  </option>
+                ))}
+              </select>
+              {itemForm.formState.errors.skillId && (
+                <p className="text-sm text-destructive">{itemForm.formState.errors.skillId.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">Part Title</Label>
+              <Input
+                id="title"
+                placeholder="Part title"
+                {...itemForm.register("title")}
+                data-testid="input-item-title"
+              />
+              {itemForm.formState.errors.title && (
+                <p className="text-sm text-destructive">{itemForm.formState.errors.title.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resourceUrl">Resource URL (Optional)</Label>
+              <Input
+                id="resourceUrl"
+                placeholder="https://example.com/resource"
+                {...itemForm.register("resourceUrl")}
+                data-testid="input-item-resource-url"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={addItemMutation.isPending}
+              data-testid="button-submit-item"
+            >
+              {addItemMutation.isPending ? "Adding..." : "Add Part"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Part Dialog */}
+      <Dialog open={isEditItemOpen} onOpenChange={setIsEditItemOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Part</DialogTitle>
+            <DialogDescription>
+              Update the part details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-item-title">Part Title</Label>
+              <Input
+                id="edit-item-title"
+                value={editItemTitle}
+                onChange={(e) => setEditItemTitle(e.target.value)}
+                data-testid="input-edit-item-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-item-resource">Resource URL (Optional)</Label>
+              <Input
+                id="edit-item-resource"
+                placeholder="https://example.com"
+                value={editItemResourceUrl}
+                onChange={(e) => setEditItemResourceUrl(e.target.value)}
+                data-testid="input-edit-item-resource"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditItemOpen(false);
+                  setEditItemTitle("");
+                  setEditItemResourceUrl("");
+                  setSelectedItem(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => editItemMutation.mutate()}
+                disabled={!editItemTitle.trim() || editItemMutation.isPending}
+                data-testid="button-submit-edit-item"
+              >
+                {editItemMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => {
         if (!open) setDeleteConfirmId(null);
       }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogTitle>Delete Part</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this item? This action cannot be undone.
+              Are you sure you want to delete this part? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3 justify-end">
