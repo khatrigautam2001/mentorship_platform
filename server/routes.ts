@@ -581,21 +581,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completedCount = progressRecords.filter(p => p.completed).length;
       const overallProgress = allItems.length > 0 ? Math.round((completedCount / allItems.length) * 100) : 0;
 
-      // Find next unlocked item
+      // Unlock only the first item initially
       let nextUnlocked: string | null = null;
-      for (const skill of skillsWithItems) {
-        for (const item of skill.items) {
-          const isCompleted = progressRecords.some(p => p.itemId === item.id && p.completed);
-          if (!isCompleted) {
-            nextUnlocked = item.id;
-            break;
-          }
-        }
-        if (nextUnlocked) break;
-      }
-
-      // If nothing is unlocked yet, unlock the first item
-      if (!nextUnlocked && allItems.length > 0) {
+      if (allItems.length > 0 && progressRecords.length === 0) {
         nextUnlocked = allItems[0].id;
       }
 
