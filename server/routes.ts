@@ -158,10 +158,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Check if mentee has individual roadmap customization
           const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(mentee.id);
+          const hasIndividualCustomization = individualItems.length > 0;
           
           let skillsWithItems;
-          if (individualItems.length > 0) {
-            // Use individual customized roadmap
+          if (hasIndividualCustomization) {
+            // Use individual customized roadmap - include items with skillId
             skillsWithItems = await Promise.all(
               allSkills.map(async (skill) => {
                 const items = individualItems.filter(item => item.skillId === skill.id);
