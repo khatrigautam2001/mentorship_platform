@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Award, ExternalLink, X, Pencil } from "lucide-react";
+import { Plus, Trash2, Award, ExternalLink, X, Pencil, GripVertical } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +50,8 @@ export default function MentorRoadmap() {
   const [editPartResourceUrl, setEditPartResourceUrl] = useState("");
   const [deleteConfirmSkillId, setDeleteConfirmSkillId] = useState<string | null>(null);
   const [deleteConfirmItemId, setDeleteConfirmItemId] = useState<string | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: skills, isLoading } = useQuery<SkillWithItems[]>({
@@ -224,6 +226,24 @@ export default function MentorRoadmap() {
     },
   });
 
+  const reorderItemMutation = useMutation({
+    mutationFn: (data: { itemId: string; newOrder: number }) =>
+      apiRequest("PATCH", `/api/roadmap/items/${data.itemId}/reorder`, { order: data.newOrder }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
+      setDraggedItemId(null);
+      setDragOverItemId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to reorder part",
+        description: error.message,
+      });
+      setDraggedItemId(null);
+      setDragOverItemId(null);
+    },
+  });
 
   const addItemToForm = () => {
     setSkillItems([...skillItems, { title: "", resourceUrl: "", order: skillItems.length }]);
@@ -450,9 +470,34 @@ export default function MentorRoadmap() {
                         {skill.items.map((item, itemIndex) => (
                           <div
                             key={item.id}
-                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate"
+                            draggable
+                            onDragStart={() => setDraggedItemId(item.id)}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setDragOverItemId(item.id);
+                            }}
+                            onDragLeave={() => setDragOverItemId(null)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (draggedItemId && draggedItemId !== item.id) {
+                                reorderItemMutation.mutate({
+                                  itemId: draggedItemId,
+                                  newOrder: itemIndex,
+                                });
+                              }
+                              setDraggedItemId(null);
+                              setDragOverItemId(null);
+                            }}
+                            className={`flex items-center justify-between gap-4 rounded-md border p-3 transition-all ${
+                              draggedItemId === item.id
+                                ? "opacity-50 bg-muted"
+                                : dragOverItemId === item.id
+                                ? "bg-accent/50 border-accent"
+                                : "hover-elevate"
+                            }`}
                           >
-                            <div className="flex items-center gap-3 flex-1">
+                            <div className="flex items-center gap-3 flex-1 cursor-grab active:cursor-grabbing">
+                              <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                               <Badge variant="outline" className="min-w-[2rem] justify-center">
                                 {itemIndex + 1}
                               </Badge>
