@@ -523,6 +523,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/roadmap/skills/:id/reorder", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { order } = req.body;
+      await storage.reorderSkill(id, order);
+      res.json({ message: "Skill reordered" });
+    } catch (error) {
+      console.error("Reorder skill error:", error);
+      res.status(500).json({ message: "Failed to reorder skill" });
+    }
+  });
+
+  app.patch("/api/roadmap/items/:id/reorder", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { order } = req.body;
+      await storage.reorderRoadmapItem(id, order);
+      res.json({ message: "Item reordered" });
+    } catch (error) {
+      console.error("Reorder item error:", error);
+      res.status(500).json({ message: "Failed to reorder item" });
+    }
+  });
+
   // Mentee routes
   app.get("/api/mentee/learning", requireMentee, async (req: Request, res: Response) => {
     try {
@@ -927,6 +951,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete individual item error:", error);
       res.status(500).json({ message: "Failed to delete item" });
+    }
+  });
+
+  app.patch("/api/roadmap/individual/:menteeId/items/:itemId/reorder", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { menteeId, itemId } = req.params;
+      const { order } = req.body;
+      
+      // Verify mentee belongs to this mentor
+      const mentee = await storage.getUser(menteeId);
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+      }
+
+      await storage.reorderIndividualRoadmapItem(itemId, order);
+      res.json({ message: "Item reordered" });
+    } catch (error) {
+      console.error("Reorder individual item error:", error);
+      res.status(500).json({ message: "Failed to reorder item" });
     }
   });
 

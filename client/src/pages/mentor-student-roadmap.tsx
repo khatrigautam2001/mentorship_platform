@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, RotateCcw, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, RotateCcw, ArrowLeft, GripVertical, Award, ExternalLink } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +26,6 @@ interface SkillWithItems extends Skill {
 const addItemSchema = z.object({
   skillId: z.string().min(1, "Skill is required"),
   title: z.string().min(1, "Title is required"),
-  order: z.string(),
   isMockInterview: z.boolean().default(false),
 });
 
@@ -35,7 +36,7 @@ export default function MentorStudentRoadmap() {
   const [, setLocation] = useLocation();
   const menteeId = params?.menteeId as string;
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { toast } = useToast();
@@ -49,7 +50,6 @@ export default function MentorStudentRoadmap() {
   } = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
     defaultValues: {
-      order: "0",
       isMockInterview: false,
     },
   });
@@ -67,13 +67,12 @@ export default function MentorStudentRoadmap() {
       apiRequest("POST", `/api/roadmap/individual/${menteeId}/items`, {
         skillId: data.skillId,
         title: data.title,
-        order: parseInt(data.order),
+        order: 0,
         isMockInterview: data.isMockInterview,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       setIsAddItemOpen(false);
-      setSelectedSkillId(null);
       reset();
       toast({
         title: "Item added!",
@@ -129,11 +128,42 @@ export default function MentorStudentRoadmap() {
     },
   });
 
+  const reorderItemMutation = useMutation({
+    mutationFn: ({ itemId, order }: { itemId: string; order: number }) =>
+      apiRequest("PATCH", `/api/roadmap/individual/${menteeId}/items/${itemId}/reorder`, { order }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to reorder item",
+        description: error.message,
+      });
+    },
+  });
+
   const onSubmit = (data: AddItemFormData) => {
     addItemMutation.mutate(data);
   };
 
-  const skillIdValue = watch("skillId");
+  const handleDragStart = (e: React.DragEvent, itemId: string) => {
+    setDraggedItemId(itemId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, targetItemId: string, targetOrder: number) => {
+    e.preventDefault();
+    if (draggedItemId && draggedItemId !== targetItemId && roadmap) {
+      reorderItemMutation.mutate({ itemId: draggedItemId, order: targetOrder });
+      setDraggedItemId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -148,7 +178,7 @@ export default function MentorStudentRoadmap() {
           Back to Students
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Customize Roadmap</h1>
+          <h1 className="text-3xl font-bold">Customize Student Roadmap</h1>
           <p className="text-muted-foreground mt-1">
             Create a personalized learning path for this student
           </p>
@@ -204,21 +234,6 @@ export default function MentorStudentRoadmap() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="order">Order</Label>
-                <Input
-                  id="order"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  {...register("order")}
-                  data-testid="input-item-order"
-                />
-                {errors.order && (
-                  <p className="text-sm text-destructive">{errors.order.message}</p>
-                )}
-              </div>
-
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="isMockInterview"
@@ -269,46 +284,83 @@ export default function MentorStudentRoadmap() {
           ))}
         </div>
       ) : roadmap && roadmap.length > 0 ? (
-        <div className="space-y-4">
-          {roadmap.map((skill) => (
+        <Accordion type="multiple" className="space-y-4">
+          {roadmap.map((skill, skillIndex) => (
             <Card key={skill.id}>
-              <CardHeader>
-                <CardTitle className="text-xl">{skill.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {skill.items && skill.items.length > 0 ? (
-                  <div className="space-y-2">
-                    {skill.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-3 bg-muted rounded-md"
-                        data-testid={`item-${item.id}`}
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium">{item.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Order: {item.order}
-                            {item.isMockInterview && " • Mock Interview"}
-                          </p>
+              <AccordionItem value={skill.id} className="border-0">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 flex-1">
+                      <GripVertical className="h-5 w-5 text-muted-foreground mt-1" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{skillIndex + 1}</Badge>
+                          <AccordionTrigger className="hover:no-underline py-0">
+                            <CardTitle className="text-lg" data-testid={`text-skill-${skill.id}`}>
+                              {skill.name}
+                            </CardTitle>
+                          </AccordionTrigger>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setDeleteConfirmId(item.id)}
-                          data-testid={`button-delete-item-${item.id}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {skill.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {skill.description}
+                          </p>
+                        )}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No items in this skill</p>
-                )}
-              </CardContent>
+                </CardHeader>
+                <AccordionContent>
+                  <CardContent className="pt-0">
+                    {skill.items && skill.items.length > 0 ? (
+                      <div className="space-y-2">
+                        {skill.items.map((item, itemIndex) => (
+                          <div
+                            key={item.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, item.id)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, item.id, itemIndex)}
+                            className={`flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate cursor-move transition-opacity ${
+                              draggedItemId === item.id ? "opacity-50" : ""
+                            }`}
+                            data-testid={`item-${item.id}`}
+                          >
+                            <div className="flex items-center gap-3 flex-1">
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              <Badge variant="outline" className="min-w-[2rem] justify-center">
+                                {itemIndex + 1}
+                              </Badge>
+                              <span className="text-sm font-medium" data-testid={`text-item-${item.id}`}>
+                                {item.title}
+                              </span>
+                              {item.isMockInterview && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Award className="h-3 w-3 mr-1" />
+                                  Mock Interview
+                                </Badge>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setDeleteConfirmId(item.id)}
+                              data-testid={`button-delete-item-${item.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No items in this skill</p>
+                    )}
+                  </CardContent>
+                </AccordionContent>
+              </AccordionItem>
             </Card>
           ))}
-        </div>
+        </Accordion>
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">

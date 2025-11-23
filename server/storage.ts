@@ -71,6 +71,11 @@ export interface IStorage {
   createIndividualRoadmapItem(item: InsertIndividualRoadmapItem): Promise<any>;
   deleteIndividualRoadmapItem(id: string): Promise<void>;
   deleteAllIndividualRoadmapItemsForMentee(menteeId: string): Promise<void>;
+
+  // Reorder operations
+  reorderRoadmapItem(itemId: string, newOrder: number): Promise<void>;
+  reorderSkill(skillId: string, newOrder: number): Promise<void>;
+  reorderIndividualRoadmapItem(itemId: string, newOrder: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -260,6 +265,76 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAllIndividualRoadmapItemsForMentee(menteeId: string): Promise<void> {
     await db.delete(individualRoadmapItems).where(eq(individualRoadmapItems.menteeId, menteeId));
+  }
+
+  async reorderRoadmapItem(itemId: string, newOrder: number): Promise<void> {
+    const [item] = await db.select().from(roadmapItems).where(eq(roadmapItems.id, itemId));
+    if (!item) throw new Error("Item not found");
+    
+    // Get all items in the same skill
+    const allItems = await db.select().from(roadmapItems).where(eq(roadmapItems.skillId, item.skillId));
+    const oldOrder = item.order;
+    
+    if (newOrder > oldOrder) {
+      // Moving down: shift items between oldOrder and newOrder
+      const itemsToUpdate = allItems.filter(i => i.order > oldOrder && i.order <= newOrder);
+      for (const i of itemsToUpdate) {
+        await db.update(roadmapItems).set({ order: i.order - 1 }).where(eq(roadmapItems.id, i.id));
+      }
+    } else if (newOrder < oldOrder) {
+      // Moving up: shift items between newOrder and oldOrder
+      const itemsToUpdate = allItems.filter(i => i.order >= newOrder && i.order < oldOrder);
+      for (const i of itemsToUpdate) {
+        await db.update(roadmapItems).set({ order: i.order + 1 }).where(eq(roadmapItems.id, i.id));
+      }
+    }
+    
+    // Set the new order for the item being moved
+    await db.update(roadmapItems).set({ order: newOrder }).where(eq(roadmapItems.id, itemId));
+  }
+
+  async reorderSkill(skillId: string, newOrder: number): Promise<void> {
+    const [skill] = await db.select().from(skills).where(eq(skills.id, skillId));
+    if (!skill) throw new Error("Skill not found");
+    
+    const allSkills = await db.select().from(skills);
+    const oldOrder = skill.order;
+    
+    if (newOrder > oldOrder) {
+      const skillsToUpdate = allSkills.filter(s => s.order > oldOrder && s.order <= newOrder);
+      for (const s of skillsToUpdate) {
+        await db.update(skills).set({ order: s.order - 1 }).where(eq(skills.id, s.id));
+      }
+    } else if (newOrder < oldOrder) {
+      const skillsToUpdate = allSkills.filter(s => s.order >= newOrder && s.order < oldOrder);
+      for (const s of skillsToUpdate) {
+        await db.update(skills).set({ order: s.order + 1 }).where(eq(skills.id, s.id));
+      }
+    }
+    
+    await db.update(skills).set({ order: newOrder }).where(eq(skills.id, skillId));
+  }
+
+  async reorderIndividualRoadmapItem(itemId: string, newOrder: number): Promise<void> {
+    const [item] = await db.select().from(individualRoadmapItems).where(eq(individualRoadmapItems.id, itemId));
+    if (!item) throw new Error("Item not found");
+    
+    const allItems = await db.select().from(individualRoadmapItems).where(eq(individualRoadmapItems.menteeId, item.menteeId));
+    const oldOrder = item.order;
+    
+    if (newOrder > oldOrder) {
+      const itemsToUpdate = allItems.filter(i => i.order > oldOrder && i.order <= newOrder);
+      for (const i of itemsToUpdate) {
+        await db.update(individualRoadmapItems).set({ order: i.order - 1 }).where(eq(individualRoadmapItems.id, i.id));
+      }
+    } else if (newOrder < oldOrder) {
+      const itemsToUpdate = allItems.filter(i => i.order >= newOrder && i.order < oldOrder);
+      for (const i of itemsToUpdate) {
+        await db.update(individualRoadmapItems).set({ order: i.order + 1 }).where(eq(individualRoadmapItems.id, i.id));
+      }
+    }
+    
+    await db.update(individualRoadmapItems).set({ order: newOrder }).where(eq(individualRoadmapItems.id, itemId));
   }
 }
 
