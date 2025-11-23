@@ -26,6 +26,7 @@ interface SkillWithItems extends Skill {
 const addItemSchema = z.object({
   skillId: z.string().min(1, "Skill is required"),
   title: z.string().min(1, "Title is required"),
+  resourceUrl: z.string().optional(),
   isMockInterview: z.boolean().default(false),
 });
 
@@ -36,6 +37,7 @@ export default function MentorStudentRoadmap() {
   const [, setLocation] = useLocation();
   const menteeId = params?.menteeId as string;
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -54,7 +56,7 @@ export default function MentorStudentRoadmap() {
     },
   });
 
-  const { data: roadmap, isLoading } = useQuery<SkillWithItems[]>({
+  const { data: roadmap, isLoading, refetch } = useQuery<SkillWithItems[]>({
     queryKey: [`/api/roadmap/individual/${menteeId}`],
   });
 
@@ -62,11 +64,15 @@ export default function MentorStudentRoadmap() {
     queryKey: ["/api/roadmap/global"],
   });
 
+  // Track if roadmap is custom (has individual items)
+  const isCustomRoadmap = roadmap && roadmap.some(skill => skill.items.some(item => 'menteeId' in item));
+
   const addItemMutation = useMutation({
     mutationFn: (data: AddItemFormData) =>
       apiRequest("POST", `/api/roadmap/individual/${menteeId}/items`, {
         skillId: data.skillId,
         title: data.title,
+        resourceUrl: data.resourceUrl || null,
         order: 0,
         isMockInterview: data.isMockInterview,
       }),
@@ -148,21 +154,30 @@ export default function MentorStudentRoadmap() {
   };
 
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
+    if (!isCustomRoadmap) return; // Disable drag when using global roadmap
     setDraggedItemId(itemId);
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (!isCustomRoadmap) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = (e: React.DragEvent, targetItemId: string, targetOrder: number) => {
     e.preventDefault();
+    if (!isCustomRoadmap) return;
     if (draggedItemId && draggedItemId !== targetItemId && roadmap) {
       reorderItemMutation.mutate({ itemId: draggedItemId, order: targetOrder });
       setDraggedItemId(null);
     }
+  };
+
+  const openAddItemForSkill = (skillId: string) => {
+    setSelectedSkillId(skillId);
+    itemForm.setValue("skillId", skillId);
+    setIsAddItemOpen(true);
   };
 
   return (
@@ -187,17 +202,11 @@ export default function MentorStudentRoadmap() {
 
       <div className="flex gap-2">
         <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-item">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
-              <DialogTitle>Add Roadmap Item</DialogTitle>
+              <DialogTitle>Add Part</DialogTitle>
               <DialogDescription>
-                Add a new item to customize this student's roadmap
+                Add a new part to this skill
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -222,16 +231,26 @@ export default function MentorStudentRoadmap() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="title">Item Title</Label>
+                <Label htmlFor="title">Part Title</Label>
                 <Input
                   id="title"
-                  placeholder="Item title"
+                  placeholder="Part title"
                   {...register("title")}
                   data-testid="input-item-title"
                 />
                 {errors.title && (
                   <p className="text-sm text-destructive">{errors.title.message}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="resourceUrl">Resource URL (Optional)</Label>
+                <Input
+                  id="resourceUrl"
+                  placeholder="https://example.com/resource"
+                  {...register("resourceUrl")}
+                  data-testid="input-item-resource-url"
+                />
               </div>
 
               <div className="flex items-center gap-2">
@@ -308,6 +327,15 @@ export default function MentorStudentRoadmap() {
                         )}
                       </div>
                     </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openAddItemForSkill(skill.id)}
+                      data-testid={`button-add-part-${skill.id}`}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Part
+                    </Button>
                   </div>
                 </CardHeader>
                 <AccordionContent>

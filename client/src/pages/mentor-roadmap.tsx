@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, GripVertical, Award, ExternalLink } from "lucide-react";
+import { Plus, Trash2, GripVertical, Award, ExternalLink, X } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -23,23 +23,26 @@ interface SkillWithItems extends Skill {
 const addSkillSchema = z.object({
   name: z.string().min(2, "Skill name must be at least 2 characters"),
   description: z.string().optional(),
-});
-
-const addItemSchema = z.object({
-  skillId: z.string(),
-  title: z.string().min(2, "Item title must be at least 2 characters"),
-  resourceUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  items: z.array(z.object({
+    title: z.string().min(1, "Item title is required"),
+    resourceUrl: z.string().optional(),
+    order: z.number(),
+  })).min(1, "Must add at least one part"),
 });
 
 type AddSkillFormData = z.infer<typeof addSkillSchema>;
-type AddItemFormData = z.infer<typeof addItemSchema>;
+
+interface SkillItem {
+  title: string;
+  resourceUrl: string;
+  order: number;
+}
 
 export default function MentorRoadmap() {
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [draggedSkillId, setDraggedSkillId] = useState<string | null>(null);
+  const [skillItems, setSkillItems] = useState<SkillItem[]>([]);
   const { toast } = useToast();
 
   const { data: skills, isLoading } = useQuery<SkillWithItems[]>({
@@ -48,51 +51,42 @@ export default function MentorRoadmap() {
 
   const skillForm = useForm<AddSkillFormData>({
     resolver: zodResolver(addSkillSchema),
-    defaultValues: { name: "", description: "" },
-  });
-
-  const itemForm = useForm<AddItemFormData>({
-    resolver: zodResolver(addItemSchema),
-    defaultValues: { title: "", resourceUrl: "" },
+    defaultValues: { name: "", description: "", items: [] },
   });
 
   const addSkillMutation = useMutation({
-    mutationFn: (data: AddSkillFormData) =>
-      apiRequest("POST", "/api/roadmap/skills", data),
+    mutationFn: async (data: AddSkillFormData) => {
+      // Create skill first
+      const skillRes = await apiRequest("POST", "/api/roadmap/skills", {
+        name: data.name,
+        description: data.description,
+      });
+      
+      // Then add all items to the skill
+      for (const item of data.items) {
+        await apiRequest("POST", "/api/roadmap/items", {
+          skillId: skillRes.id,
+          title: item.title,
+          resourceUrl: item.resourceUrl || null,
+        });
+      }
+      
+      return skillRes;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
       setIsAddSkillOpen(false);
       skillForm.reset();
+      setSkillItems([]);
       toast({
         title: "Skill added!",
-        description: "New skill has been added to the roadmap",
+        description: "New skill with all parts has been added to the roadmap",
       });
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Failed to add skill",
-        description: error.message,
-      });
-    },
-  });
-
-  const addItemMutation = useMutation({
-    mutationFn: (data: AddItemFormData) =>
-      apiRequest("POST", "/api/roadmap/items", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
-      setIsAddItemOpen(false);
-      itemForm.reset();
-      toast({
-        title: "Item added!",
-        description: "New item has been added to the skill",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to add item",
         description: error.message,
       });
     },
@@ -123,14 +117,14 @@ export default function MentorRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
       toast({
-        title: "Item deleted",
-        description: "Item has been removed from the skill",
+        title: "Part deleted",
+        description: "Part has been removed from the skill",
       });
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "Failed to delete item",
+        title: "Failed to delete part",
         description: error.message,
       });
     },
@@ -145,7 +139,7 @@ export default function MentorRoadmap() {
     onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "Failed to reorder item",
+        title: "Failed to reorder part",
         description: error.message,
       });
     },
@@ -165,12 +159,6 @@ export default function MentorRoadmap() {
       });
     },
   });
-
-  const openAddItem = (skillId: string) => {
-    setSelectedSkillId(skillId);
-    itemForm.setValue("skillId", skillId);
-    setIsAddItemOpen(true);
-  };
 
   const handleDragStartItem = (e: React.DragEvent, itemId: string) => {
     setDraggedItemId(itemId);
@@ -203,6 +191,32 @@ export default function MentorRoadmap() {
     }
   };
 
+  const addItemToForm = () => {
+    setSkillItems([...skillItems, { title: "", resourceUrl: "", order: skillItems.length }]);
+  };
+
+  const removeItemFromForm = (index: number) => {
+    setSkillItems(skillItems.filter((_, i) => i !== index));
+  };
+
+  const updateItemInForm = (index: number, field: string, value: string) => {
+    const updated = [...skillItems];
+    updated[index] = { ...updated[index], [field]: value };
+    setSkillItems(updated);
+  };
+
+  const onSubmit = (data: AddSkillFormData) => {
+    const finalData = {
+      ...data,
+      items: skillItems.map((item, idx) => ({
+        title: item.title,
+        resourceUrl: item.resourceUrl,
+        order: idx,
+      })),
+    };
+    addSkillMutation.mutate(finalData);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -216,44 +230,97 @@ export default function MentorRoadmap() {
           <DialogTrigger asChild>
             <Button data-testid="button-add-skill">
               <Plus className="h-4 w-4 mr-2" />
-              Add Skill
+              Add a Skill
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Skill</DialogTitle>
               <DialogDescription>
-                Create a new skill category for your roadmap
+                Create a skill and add parts/items for it
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={skillForm.handleSubmit((data) => addSkillMutation.mutate(data))} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Skill Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Excel, SQL, Power BI"
-                  data-testid="input-skill-name"
-                  {...skillForm.register("name")}
-                />
-                {skillForm.formState.errors.name && (
-                  <p className="text-sm text-destructive">{skillForm.formState.errors.name.message}</p>
-                )}
+            <form onSubmit={skillForm.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-4 border-b pb-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Skill Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g., Excel, SQL, Power BI"
+                    data-testid="input-skill-name"
+                    {...skillForm.register("name")}
+                  />
+                  {skillForm.formState.errors.name && (
+                    <p className="text-sm text-destructive">{skillForm.formState.errors.name.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Input
+                    id="description"
+                    placeholder="Brief description of the skill"
+                    data-testid="input-skill-description"
+                    {...skillForm.register("description")}
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Input
-                  id="description"
-                  placeholder="Brief description of the skill"
-                  data-testid="input-skill-description"
-                  {...skillForm.register("description")}
-                />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Parts</h3>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={addItemToForm}
+                    data-testid="button-add-part"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Part
+                  </Button>
+                </div>
+
+                {skillItems.length > 0 ? (
+                  <div className="space-y-3 border rounded-lg p-4 bg-muted/50">
+                    {skillItems.map((item, idx) => (
+                      <div key={idx} className="flex gap-3 items-start">
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            placeholder="Part title"
+                            value={item.title}
+                            onChange={(e) => updateItemInForm(idx, "title", e.target.value)}
+                            data-testid={`input-part-title-${idx}`}
+                          />
+                          <Input
+                            placeholder="Resource URL (optional)"
+                            value={item.resourceUrl}
+                            onChange={(e) => updateItemInForm(idx, "resourceUrl", e.target.value)}
+                            data-testid={`input-part-resource-${idx}`}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItemFromForm(idx)}
+                          className="mt-0"
+                          data-testid={`button-remove-part-${idx}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No parts yet. Click "Add Part" to begin.</p>
+                )}
               </div>
 
               <Button
                 type="submit"
                 className="w-full"
-                disabled={addSkillMutation.isPending}
+                disabled={addSkillMutation.isPending || skillItems.length === 0}
                 data-testid="button-submit-skill"
               >
                 {addSkillMutation.isPending ? "Adding..." : "Add Skill"}
@@ -309,18 +376,9 @@ export default function MentorRoadmap() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => openAddItem(skill.id)}
-                        data-testid={`button-add-item-${skill.id}`}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Item
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
+                        data-testid={`button-delete-skill-${skill.id}`}
                         onClick={() => deleteSkillMutation.mutate(skill.id)}
                         disabled={deleteSkillMutation.isPending}
-                        data-testid={`button-delete-skill-${skill.id}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -376,7 +434,7 @@ export default function MentorRoadmap() {
                       </div>
                     ) : (
                       <div className="text-center py-6 text-sm text-muted-foreground">
-                        No items yet. Add your first item to this skill.
+                        No parts yet. Add your first part to this skill.
                       </div>
                     )}
                   </CardContent>
@@ -395,60 +453,11 @@ export default function MentorRoadmap() {
             </p>
             <Button onClick={() => setIsAddSkillOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Skill
+              Add a Skill
             </Button>
           </CardContent>
         </Card>
       )}
-
-      <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Item</DialogTitle>
-            <DialogDescription>
-              Add a learning item to this skill
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={itemForm.handleSubmit((data) => addItemMutation.mutate(data))} className="space-y-4">
-            <input type="hidden" {...itemForm.register("skillId")} />
-            
-            <div className="space-y-2">
-              <Label htmlFor="title">Item Title</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Introduction to Formulas"
-                data-testid="input-item-title"
-                {...itemForm.register("title")}
-              />
-              {itemForm.formState.errors.title && (
-                <p className="text-sm text-destructive">{itemForm.formState.errors.title.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="resourceUrl">Resource URL (Optional)</Label>
-              <Input
-                id="resourceUrl"
-                placeholder="https://example.com/resource"
-                data-testid="input-item-resource-url"
-                {...itemForm.register("resourceUrl")}
-              />
-              {itemForm.formState.errors.resourceUrl && (
-                <p className="text-sm text-destructive">{itemForm.formState.errors.resourceUrl.message}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={addItemMutation.isPending}
-              data-testid="button-submit-item"
-            >
-              {addItemMutation.isPending ? "Adding..." : "Add Item"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
