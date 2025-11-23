@@ -159,26 +159,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Check if mentee has individual roadmap customization
           const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(mentee.id);
           
-          let itemsToUse: any[];
+          let skillsWithItems;
           if (individualItems.length > 0) {
             // Use individual customized roadmap
-            itemsToUse = individualItems;
+            skillsWithItems = await Promise.all(
+              allSkills.map(async (skill) => {
+                const items = individualItems.filter(item => item.skillId === skill.id);
+                return { ...skill, items };
+              })
+            );
           } else {
             // Use global roadmap
-            itemsToUse = await storage.getAllRoadmapItems();
+            skillsWithItems = await Promise.all(
+              allSkills.map(async (skill) => {
+                const items = await storage.getRoadmapItemsBySkillId(skill.id);
+                return { ...skill, items };
+              })
+            );
           }
           
+          // Calculate progress
+          const allItems = skillsWithItems.flatMap(s => s.items);
           const completedItems = progressRecords.filter(p => p.completed).length;
-          const totalItems = itemsToUse.length;
+          const totalItems = allItems.length;
           const progressPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-          // Find current skill - the first uncompleted item
-          const nextIncomplete = itemsToUse.find(
-            item => !progressRecords.some(p => p.itemId === item.id && p.completed)
-          );
-          const currentSkill = nextIncomplete
-            ? allSkills.find(s => s.id === nextIncomplete.skillId)?.name
-            : undefined;
+          // Find current skill - the first uncompleted item (iterate through skills and items sequentially)
+          let currentSkill: string | undefined = undefined;
+          for (const skill of skillsWithItems) {
+            for (const item of skill.items) {
+              const isCompleted = progressRecords.some(p => p.itemId === item.id && p.completed);
+              if (!isCompleted) {
+                currentSkill = skill.name;
+                break;
+              }
+            }
+            if (currentSkill) break;
+          }
 
           return {
             ...mentee,
