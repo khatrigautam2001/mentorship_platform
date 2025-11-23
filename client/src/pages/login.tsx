@@ -115,18 +115,6 @@ export default function Login() {
               >
                 {loginMutation.isPending ? "Signing in..." : "Sign In"}
               </Button>
-
-              <div className="text-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setLocation("/register")}
-                  data-testid="link-register"
-                  className="text-sm h-auto p-0"
-                >
-                  New mentor? Create an account
-                </Button>
-              </div>
             </form>
           </CardContent>
         </Card>

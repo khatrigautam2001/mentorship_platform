@@ -212,17 +212,6 @@ export default function MentorStudentRoadmap() {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isMockInterview"
-                  {...itemForm.register("isMockInterview")}
-                  data-testid="checkbox-mock-interview"
-                />
-                <Label htmlFor="isMockInterview" className="font-normal cursor-pointer">
-                  This is a mock interview item
-                </Label>
-              </div>
-
               <Button
                 type="submit"
                 className="w-full"
