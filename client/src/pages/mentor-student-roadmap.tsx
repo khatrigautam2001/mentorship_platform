@@ -255,21 +255,8 @@ export default function MentorStudentRoadmap() {
     addSkillMutation.mutate(data);
   };
 
-  // Combine individual and global skills
-  const combinedSkills: IndividualSkillWithItems[] = [];
-  
-  if (individualSkills && individualSkills.length > 0) {
-    // Show individual skills with their items
-    for (const skill of individualSkills) {
-      const items = roadmap?.flatMap(s => s.items).filter((item: any) => item.individualSkillId === skill.id) || [];
-      combinedSkills.push({ ...skill, items, isIndividual: true });
-    }
-  } else if (roadmap && roadmap.length > 0) {
-    // Show global skills if no individual skills
-    for (const skill of roadmap) {
-      combinedSkills.push({ ...skill, items: skill.items || [], isIndividual: false });
-    }
-  }
+  // Use roadmap directly (backend now returns both global and individual skills combined)
+  const combinedSkills = roadmap || [];
 
   return (
     <div className="space-y-6">
