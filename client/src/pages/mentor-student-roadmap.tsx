@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -21,7 +22,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface SkillWithItems extends Skill {
   items: any[];
+  isIndividual?: boolean;
 }
+
+const addSkillSchema = z.object({
+  name: z.string().min(1, "Skill name is required"),
+  description: z.string().optional(),
+});
+
+type AddSkillFormData = z.infer<typeof addSkillSchema>;
 
 const addItemSchema = z.object({
   skillId: z.string().min(1, "Skill is required"),
@@ -36,15 +45,25 @@ export default function MentorStudentRoadmap() {
   const [, params] = useRoute("/mentor/students/:menteeId/roadmap");
   const [, setLocation] = useLocation();
   const menteeId = params?.menteeId as string;
+  const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [isEditItemOpen, setIsEditItemOpen] = useState(false);
+  const [isEditSkillOpen, setIsEditSkillOpen] = useState(false);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<SkillWithItems | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteSkillConfirmId, setDeleteSkillConfirmId] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [editItemTitle, setEditItemTitle] = useState("");
   const [editItemResourceUrl, setEditItemResourceUrl] = useState("");
+  const [editSkillName, setEditSkillName] = useState("");
+  const [editSkillDescription, setEditSkillDescription] = useState("");
   const { toast } = useToast();
+
+  const skillForm = useForm<AddSkillFormData>({
+    resolver: zodResolver(addSkillSchema),
+  });
 
   const itemForm = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
@@ -61,8 +80,83 @@ export default function MentorStudentRoadmap() {
     queryKey: ["/api/roadmap/global"],
   });
 
-  // Track if roadmap is custom (has individual items)
-  const isCustomRoadmap = roadmap && roadmap.some(skill => skill.items.some(item => 'menteeId' in item));
+  // Track if roadmap has any individual customizations
+  const hasCustomization = roadmap && roadmap.some(skill => skill.isIndividual);
+
+  const addSkillMutation = useMutation({
+    mutationFn: (data: AddSkillFormData) => {
+      const nextOrder = roadmap?.length || 0;
+      return apiRequest("POST", `/api/roadmap/individual/${menteeId}/skills`, {
+        name: data.name,
+        description: data.description || null,
+        order: nextOrder,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      setIsAddSkillOpen(false);
+      skillForm.reset();
+      toast({
+        title: "Skill added!",
+        description: "New skill has been added to the roadmap",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to add skill",
+        description: error.message,
+      });
+    },
+  });
+
+  const editSkillMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedSkill) throw new Error("No skill selected");
+      return apiRequest("PATCH", `/api/roadmap/individual/${menteeId}/skills/${selectedSkill.id}`, {
+        name: editSkillName,
+        description: editSkillDescription || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      setIsEditSkillOpen(false);
+      setEditSkillName("");
+      setEditSkillDescription("");
+      setSelectedSkill(null);
+      toast({
+        title: "Skill updated!",
+        description: "Skill has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to update skill",
+        description: error.message,
+      });
+    },
+  });
+
+  const deleteSkillMutation = useMutation({
+    mutationFn: (skillId: string) =>
+      apiRequest("DELETE", `/api/roadmap/individual/${menteeId}/skills/${skillId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      setDeleteSkillConfirmId(null);
+      toast({
+        title: "Skill deleted!",
+        description: "Skill has been removed from the roadmap",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to delete skill",
+        description: error.message,
+      });
+    },
+  });
 
   const addItemMutation = useMutation({
     mutationFn: (data: AddItemFormData) =>
@@ -159,7 +253,11 @@ export default function MentorStudentRoadmap() {
     },
   });
 
-  const onSubmit = (data: AddItemFormData) => {
+  const onAddSkillSubmit = (data: AddSkillFormData) => {
+    addSkillMutation.mutate(data);
+  };
+
+  const onAddItemSubmit = (data: AddItemFormData) => {
     addItemMutation.mutate(data);
   };
 
@@ -169,35 +267,53 @@ export default function MentorStudentRoadmap() {
     setIsAddItemOpen(true);
   };
 
+  const openEditSkill = (skill: SkillWithItems) => {
+    setSelectedSkill(skill);
+    setEditSkillName(skill.name);
+    setEditSkillDescription(skill.description || "");
+    setIsEditSkillOpen(true);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setLocation("/mentor/students")}
-          data-testid="button-back"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Students
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Customize Student Roadmap</h1>
-          <p className="text-muted-foreground mt-1">
-            Create a personalized learning path for this student
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation("/mentor/students")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Students
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Customize Student Roadmap</h1>
+            <p className="text-muted-foreground mt-1">
+              Create a personalized learning path for this student
+            </p>
+          </div>
         </div>
+        <Button
+          onClick={() => setIsAddSkillOpen(true)}
+          data-testid="button-add-skill"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Skill
+        </Button>
       </div>
 
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          onClick={() => setShowResetConfirm(true)}
-          data-testid="button-reset-roadmap"
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Reset to Global
-        </Button>
+        {hasCustomization && (
+          <Button
+            variant="outline"
+            onClick={() => setShowResetConfirm(true)}
+            data-testid="button-reset-roadmap"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset to Global
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -241,15 +357,37 @@ export default function MentorStudentRoadmap() {
                         )}
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openAddItemForSkill(skill.id)}
-                      data-testid={`button-add-part-${skill.id}`}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Part
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openAddItemForSkill(skill.id)}
+                        data-testid={`button-add-part-${skill.id}`}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Part
+                      </Button>
+                      {skill.isIndividual && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openEditSkill(skill)}
+                            data-testid={`button-edit-skill-${skill.id}`}
+                          >
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setDeleteSkillConfirmId(skill.id)}
+                            data-testid={`button-delete-skill-${skill.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <AccordionContent>
@@ -321,15 +459,117 @@ export default function MentorStudentRoadmap() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <h3 className="text-lg font-medium mb-2">No custom roadmap yet</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              This student is using the global roadmap. Add custom parts to create a personalized path.
+              This student is using the global roadmap. Add skills or parts to create a personalized path.
             </p>
-            <Button onClick={() => setIsAddItemOpen(true)}>
+            <Button onClick={() => setIsAddSkillOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Part
+              Add Skill
             </Button>
           </CardContent>
         </Card>
       )}
+
+      {/* Add Skill Dialog */}
+      <Dialog open={isAddSkillOpen} onOpenChange={setIsAddSkillOpen}>
+        <DialogContent className="max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Add Skill</DialogTitle>
+            <DialogDescription>
+              Add a new skill to this student's roadmap
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={skillForm.handleSubmit(onAddSkillSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="skill-name">Skill Name</Label>
+              <Input
+                id="skill-name"
+                placeholder="Skill name"
+                {...skillForm.register("name")}
+                data-testid="input-skill-name"
+              />
+              {skillForm.formState.errors.name && (
+                <p className="text-sm text-destructive">{skillForm.formState.errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="skill-description">Description (Optional)</Label>
+              <Textarea
+                id="skill-description"
+                placeholder="Skill description"
+                className="resize-none"
+                rows={3}
+                {...skillForm.register("description")}
+                data-testid="textarea-skill-description"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={addSkillMutation.isPending}
+              data-testid="button-submit-skill"
+            >
+              {addSkillMutation.isPending ? "Adding..." : "Add Skill"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Skill Dialog */}
+      <Dialog open={isEditSkillOpen} onOpenChange={setIsEditSkillOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Skill</DialogTitle>
+            <DialogDescription>
+              Update the skill details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-skill-name">Skill Name</Label>
+              <Input
+                id="edit-skill-name"
+                value={editSkillName}
+                onChange={(e) => setEditSkillName(e.target.value)}
+                data-testid="input-edit-skill-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-skill-description">Description (Optional)</Label>
+              <Textarea
+                id="edit-skill-description"
+                placeholder="Skill description"
+                className="resize-none"
+                rows={3}
+                value={editSkillDescription}
+                onChange={(e) => setEditSkillDescription(e.target.value)}
+                data-testid="textarea-edit-skill-description"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditSkillOpen(false);
+                  setEditSkillName("");
+                  setEditSkillDescription("");
+                  setSelectedSkill(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => editSkillMutation.mutate()}
+                disabled={!editSkillName.trim() || editSkillMutation.isPending}
+                data-testid="button-submit-edit-skill"
+              >
+                {editSkillMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Part Dialog */}
       <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
@@ -340,7 +580,7 @@ export default function MentorStudentRoadmap() {
               Add a new part to this skill
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={itemForm.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={itemForm.handleSubmit(onAddItemSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="skillId">Skill</Label>
               <select
@@ -350,7 +590,7 @@ export default function MentorStudentRoadmap() {
                 data-testid="select-skill"
               >
                 <option value="">Select a skill</option>
-                {allSkills?.map((skill) => (
+                {roadmap?.map((skill) => (
                   <option key={skill.id} value={skill.id}>
                     {skill.name}
                   </option>
@@ -472,6 +712,34 @@ export default function MentorStudentRoadmap() {
               data-testid="button-confirm-delete-item"
             >
               {deleteItemMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteSkillConfirmId !== null} onOpenChange={(open) => {
+        if (!open) setDeleteSkillConfirmId(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Skill</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this skill? All parts in this skill will also be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteSkillConfirmId) {
+                  deleteSkillMutation.mutate(deleteSkillConfirmId);
+                }
+              }}
+              disabled={deleteSkillMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-skill"
+            >
+              {deleteSkillMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </div>
         </AlertDialogContent>

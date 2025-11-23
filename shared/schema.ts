@@ -69,6 +69,16 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const individualSkills = pgTable("individual_skills", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  menteeId: varchar("mentee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  description: text("description"),
+  order: integer("order").notNull(),
+  badgeIcon: text("badge_icon"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const individualRoadmapItems = pgTable("individual_roadmap_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   menteeId: varchar("mentee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -91,6 +101,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   badges: many(badges),
   payments: many(payments),
   individualRoadmapItems: many(individualRoadmapItems),
+  individualSkills: many(individualSkills),
 }));
 
 export const skillsRelations = relations(skills, ({ many }) => ({
@@ -148,6 +159,13 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
+export const individualSkillsRelations = relations(individualSkills, ({ one }) => ({
+  mentee: one(users, {
+    fields: [individualSkills.menteeId],
+    references: [users.id],
+  }),
+}));
+
 export const individualRoadmapItemsRelations = relations(individualRoadmapItems, ({ one }) => ({
   mentee: one(users, {
     fields: [individualRoadmapItems.menteeId],
@@ -165,6 +183,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 export const insertSkillSchema = createInsertSchema(skills).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertIndividualSkillSchema = createInsertSchema(individualSkills).omit({
   id: true,
   createdAt: true,
 });
@@ -203,6 +226,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertSkill = z.infer<typeof insertSkillSchema>;
 export type Skill = typeof skills.$inferSelect;
+export type InsertIndividualSkill = z.infer<typeof insertIndividualSkillSchema>;
+export type IndividualSkill = typeof individualSkills.$inferSelect;
 export type InsertRoadmapItem = z.infer<typeof insertRoadmapItemSchema>;
 export type RoadmapItem = typeof roadmapItems.$inferSelect;
 export type InsertProgress = z.infer<typeof insertProgressSchema>;
