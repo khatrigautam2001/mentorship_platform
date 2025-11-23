@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Award, ExternalLink, X } from "lucide-react";
+import { Plus, Trash2, Award, ExternalLink, X, Pencil } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +35,14 @@ interface SkillItem {
 
 export default function MentorRoadmap() {
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
+  const [isAddPartOpen, setIsAddPartOpen] = useState(false);
+  const [isEditSkillOpen, setIsEditSkillOpen] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<SkillWithItems | null>(null);
   const [skillItems, setSkillItems] = useState<SkillItem[]>([]);
+  const [newPartTitle, setNewPartTitle] = useState("");
+  const [newPartResourceUrl, setNewPartResourceUrl] = useState("");
+  const [editSkillName, setEditSkillName] = useState("");
+  const [editSkillDescription, setEditSkillDescription] = useState("");
   const { toast } = useToast();
 
   const { data: skills, isLoading } = useQuery<SkillWithItems[]>({
@@ -118,6 +125,63 @@ export default function MentorRoadmap() {
       toast({
         variant: "destructive",
         title: "Failed to delete part",
+        description: error.message,
+      });
+    },
+  });
+
+  const addPartMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedSkill) throw new Error("No skill selected");
+      return apiRequest("POST", "/api/roadmap/items", {
+        skillId: selectedSkill.id,
+        title: newPartTitle,
+        resourceUrl: newPartResourceUrl || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
+      setIsAddPartOpen(false);
+      setNewPartTitle("");
+      setNewPartResourceUrl("");
+      setSelectedSkill(null);
+      toast({
+        title: "Part added!",
+        description: "New part has been added to the skill",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to add part",
+        description: error.message,
+      });
+    },
+  });
+
+  const editSkillMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedSkill) throw new Error("No skill selected");
+      return apiRequest("PATCH", `/api/roadmap/skills/${selectedSkill.id}`, {
+        name: editSkillName,
+        description: editSkillDescription,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
+      setIsEditSkillOpen(false);
+      setEditSkillName("");
+      setEditSkillDescription("");
+      setSelectedSkill(null);
+      toast({
+        title: "Skill updated!",
+        description: "Skill has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to update skill",
         description: error.message,
       });
     },
@@ -308,6 +372,31 @@ export default function MentorRoadmap() {
                       <Button
                         size="sm"
                         variant="outline"
+                        data-testid={`button-add-part-${skill.id}`}
+                        onClick={() => {
+                          setSelectedSkill(skill);
+                          setIsAddPartOpen(true);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add part
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        data-testid={`button-edit-skill-${skill.id}`}
+                        onClick={() => {
+                          setSelectedSkill(skill);
+                          setEditSkillName(skill.name);
+                          setEditSkillDescription(skill.description || "");
+                          setIsEditSkillOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         data-testid={`button-delete-skill-${skill.id}`}
                         onClick={() => deleteSkillMutation.mutate(skill.id)}
                         disabled={deleteSkillMutation.isPending}
@@ -383,6 +472,110 @@ export default function MentorRoadmap() {
           </CardContent>
         </Card>
       )}
+
+      {/* Add Part Dialog */}
+      <Dialog open={isAddPartOpen} onOpenChange={setIsAddPartOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Part to {selectedSkill?.name}</DialogTitle>
+            <DialogDescription>
+              Add a new part/item to this skill
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="part-title">Part Title</Label>
+              <Input
+                id="part-title"
+                placeholder="e.g., Basic Functions"
+                value={newPartTitle}
+                onChange={(e) => setNewPartTitle(e.target.value)}
+                data-testid="input-add-part-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="part-resource">Resource URL (Optional)</Label>
+              <Input
+                id="part-resource"
+                placeholder="https://example.com"
+                value={newPartResourceUrl}
+                onChange={(e) => setNewPartResourceUrl(e.target.value)}
+                data-testid="input-add-part-resource"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddPartOpen(false);
+                  setNewPartTitle("");
+                  setNewPartResourceUrl("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => addPartMutation.mutate()}
+                disabled={!newPartTitle.trim() || addPartMutation.isPending}
+                data-testid="button-submit-add-part"
+              >
+                {addPartMutation.isPending ? "Adding..." : "Add Part"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Skill Dialog */}
+      <Dialog open={isEditSkillOpen} onOpenChange={setIsEditSkillOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Skill</DialogTitle>
+            <DialogDescription>
+              Update the skill details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-skill-name">Skill Name</Label>
+              <Input
+                id="edit-skill-name"
+                value={editSkillName}
+                onChange={(e) => setEditSkillName(e.target.value)}
+                data-testid="input-edit-skill-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-skill-description">Description (Optional)</Label>
+              <Input
+                id="edit-skill-description"
+                value={editSkillDescription}
+                onChange={(e) => setEditSkillDescription(e.target.value)}
+                data-testid="input-edit-skill-description"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditSkillOpen(false);
+                  setEditSkillName("");
+                  setEditSkillDescription("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => editSkillMutation.mutate()}
+                disabled={!editSkillName.trim() || editSkillMutation.isPending}
+                data-testid="button-submit-edit-skill"
+              >
+                {editSkillMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

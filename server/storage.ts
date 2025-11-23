@@ -133,6 +133,15 @@ export class DatabaseStorage implements IStorage {
     return skill;
   }
 
+  async updateSkill(id: string, updates: Partial<InsertSkill>): Promise<Skill | undefined> {
+    const [skill] = await db
+      .update(skills)
+      .set(updates)
+      .where(eq(skills.id, id))
+      .returning();
+    return skill || undefined;
+  }
+
   async deleteSkill(id: string): Promise<void> {
     await db.delete(roadmapItems).where(eq(roadmapItems.skillId, id));
     await db.delete(skills).where(eq(skills.id, id));

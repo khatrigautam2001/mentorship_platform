@@ -518,6 +518,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/roadmap/skills/:id", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { name, description } = req.body;
+      
+      const skill = await storage.updateSkill(id, {
+        name,
+        description: description || null,
+      });
+      
+      res.json(skill);
+    } catch (error) {
+      console.error("Update skill error:", error);
+      res.status(500).json({ message: "Failed to update skill" });
+    }
+  });
+
   app.post("/api/roadmap/items", requireMentor, async (req: Request, res: Response) => {
     try {
       const { skillId, title, resourceUrl } = req.body;
