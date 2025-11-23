@@ -234,6 +234,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/mentor/students/:id", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const mentee = await storage.getUser(id);
+      
+      if (!mentee || mentee.mentorId !== req.session.userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Delete all related data (cascade is handled by DB constraints)
+      await storage.deleteUser(id);
+
+      res.json({ message: "Student removed successfully" });
+    } catch (error) {
+      console.error("Delete student error:", error);
+      res.status(500).json({ message: "Failed to remove student" });
+    }
+  });
+
   app.get("/api/mentor/stats", requireMentor, async (req: Request, res: Response) => {
     try {
       const mentees = await storage.getMenteesByMentorId(req.session.userId!);

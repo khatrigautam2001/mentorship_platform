@@ -5,9 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Mail, Phone, DollarSign, Edit, Award, Users, Copy, Check } from "lucide-react";
+import { Plus, Mail, Phone, DollarSign, Edit, Award, Users, Copy, Check, Trash2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +41,8 @@ export default function MentorStudents() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [expandedCredentials, setExpandedCredentials] = useState<string | null>(null);
   const [studentCredentials, setStudentCredentials] = useState<Record<string, { email: string; password: string }>>({});
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState<string>("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -72,6 +75,28 @@ export default function MentorStudents() {
       setExpandedCredentials(studentId);
     }
   };
+
+  const deleteStudentMutation = useMutation({
+    mutationFn: (studentId: string) =>
+      apiRequest("DELETE", `/api/mentor/students/${studentId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mentor/students"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentor/stats"] });
+      setDeleteConfirmId(null);
+      setDeleteConfirmName("");
+      toast({
+        title: "Student removed",
+        description: "The student has been removed from your list",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to remove student",
+        description: error.message,
+      });
+    },
+  });
 
   const { data: students, isLoading } = useQuery<MenteeWithProgress[]>({
     queryKey: ["/api/mentor/students"],
@@ -441,6 +466,19 @@ export default function MentorStudents() {
                     >
                       {expandedCredentials === student.id ? "Hide Credentials" : "View Credentials"}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirmId(student.id);
+                        setDeleteConfirmName(student.name);
+                      }}
+                      data-testid={`button-delete-student-${student.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Remove Student
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -462,6 +500,37 @@ export default function MentorStudents() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteConfirmId(null);
+          setDeleteConfirmName("");
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <span className="font-semibold text-foreground">{deleteConfirmName}</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConfirmId) {
+                  deleteStudentMutation.mutate(deleteConfirmId);
+                }
+              }}
+              disabled={deleteStudentMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-student"
+            >
+              {deleteStudentMutation.isPending ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
