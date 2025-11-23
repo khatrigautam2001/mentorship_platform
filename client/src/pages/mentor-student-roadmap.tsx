@@ -157,8 +157,10 @@ export default function MentorStudentRoadmap() {
   const addItemMutation = useMutation({
     mutationFn: async () => {
       if (!selectedSkill) throw new Error("No skill selected");
+      const isIndividualSkill = (selectedSkill as any).menteeId !== undefined;
       return apiRequest("POST", `/api/roadmap/individual/${menteeId}/items`, {
-        individualSkillId: selectedSkill.id,
+        skillId: isIndividualSkill ? null : selectedSkill.id,
+        individualSkillId: isIndividualSkill ? selectedSkill.id : null,
         title: newPartTitle,
         resourceUrl: newPartResourceUrl || null,
         order: 0,
