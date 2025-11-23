@@ -626,7 +626,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const globalSkills = await storage.getAllSkills();
         skillsWithItems = await Promise.all(
           globalSkills.map(async (skill) => {
-            const items = individualItems.filter(item => item.skillId === skill.id);
+            // Get both global and individual items for this skill
+            const globalItems = await storage.getRoadmapItemsBySkillId(skill.id);
+            const customIndividualItems = individualItems.filter(item => item.skillId === skill.id);
+            // Use individual items if they exist (customization), otherwise use global items
+            const items = customIndividualItems.length > 0 ? customIndividualItems : globalItems;
             return { ...skill, items };
           })
         );
@@ -892,7 +896,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const globalSkills = await storage.getAllSkills();
         const skillsWithItems = await Promise.all(
           globalSkills.map(async (skill) => {
-            const items = individualItems.filter(item => item.skillId === skill.id);
+            // Get both global and individual items for this skill
+            const globalItems = await storage.getRoadmapItemsBySkillId(skill.id);
+            const customIndividualItems = individualItems.filter(item => item.skillId === skill.id);
+            // Use individual items if they exist (customization), otherwise use global items
+            const items = customIndividualItems.length > 0 ? customIndividualItems : globalItems;
             return { ...skill, items };
           })
         );
