@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { Skill, RoadmapItem } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface SkillWithItems extends Skill {
   items: RoadmapItem[];
@@ -47,6 +48,8 @@ export default function MentorRoadmap() {
   const [editSkillDescription, setEditSkillDescription] = useState("");
   const [editPartTitle, setEditPartTitle] = useState("");
   const [editPartResourceUrl, setEditPartResourceUrl] = useState("");
+  const [deleteConfirmSkillId, setDeleteConfirmSkillId] = useState<string | null>(null);
+  const [deleteConfirmItemId, setDeleteConfirmItemId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: skills, isLoading } = useQuery<SkillWithItems[]>({
@@ -98,9 +101,10 @@ export default function MentorRoadmap() {
 
   const deleteSkillMutation = useMutation({
     mutationFn: (skillId: string) =>
-      apiRequest("DELETE", `/api/roadmap/skills/${skillId}`, {}),
+      apiRequest("DELETE", `/api/roadmap/skills/${skillId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
+      setDeleteConfirmSkillId(null);
       toast({
         title: "Skill deleted",
         description: "Skill has been removed from the roadmap",
@@ -117,9 +121,10 @@ export default function MentorRoadmap() {
 
   const deleteItemMutation = useMutation({
     mutationFn: (itemId: string) =>
-      apiRequest("DELETE", `/api/roadmap/items/${itemId}`, {}),
+      apiRequest("DELETE", `/api/roadmap/items/${itemId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
+      setDeleteConfirmItemId(null);
       toast({
         title: "Part deleted",
         description: "Part has been removed from the skill",
@@ -430,7 +435,7 @@ export default function MentorRoadmap() {
                         size="sm"
                         variant="outline"
                         data-testid={`button-delete-skill-${skill.id}`}
-                        onClick={() => deleteSkillMutation.mutate(skill.id)}
+                        onClick={() => setDeleteConfirmSkillId(skill.id)}
                         disabled={deleteSkillMutation.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -483,7 +488,7 @@ export default function MentorRoadmap() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => deleteItemMutation.mutate(item.id)}
+                                onClick={() => setDeleteConfirmItemId(item.id)}
                                 disabled={deleteItemMutation.isPending}
                                 data-testid={`button-delete-item-${item.id}`}
                               >
@@ -676,6 +681,64 @@ export default function MentorRoadmap() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Skill Confirmation */}
+      <AlertDialog open={deleteConfirmSkillId !== null} onOpenChange={(open) => {
+        if (!open) setDeleteConfirmSkillId(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Skill</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this skill and all its parts? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConfirmSkillId) {
+                  deleteSkillMutation.mutate(deleteConfirmSkillId);
+                }
+              }}
+              disabled={deleteSkillMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-skill"
+            >
+              {deleteSkillMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Part Confirmation */}
+      <AlertDialog open={deleteConfirmItemId !== null} onOpenChange={(open) => {
+        if (!open) setDeleteConfirmItemId(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Part</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this part? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConfirmItemId) {
+                  deleteItemMutation.mutate(deleteConfirmItemId);
+                }
+              }}
+              disabled={deleteItemMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-item"
+            >
+              {deleteItemMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

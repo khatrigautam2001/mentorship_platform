@@ -132,7 +132,7 @@ export default function MentorStudentRoadmap() {
 
   const deleteSkillMutation = useMutation({
     mutationFn: (skillId: string) =>
-      apiRequest("DELETE", `/api/roadmap/individual/${menteeId}/skills/${skillId}`),
+      apiRequest("DELETE", `/api/roadmap/individual/${menteeId}/skills/${skillId}` as string),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
@@ -212,7 +212,7 @@ export default function MentorStudentRoadmap() {
 
   const deleteItemMutation = useMutation({
     mutationFn: (itemId: string) =>
-      apiRequest("DELETE", `/api/roadmap/individual/${menteeId}/items/${itemId}`),
+      apiRequest("DELETE", `/api/roadmap/individual/${menteeId}/items/${itemId}` as string),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       setDeleteConfirmItemId(null);
