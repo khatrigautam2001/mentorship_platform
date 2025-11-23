@@ -56,6 +56,8 @@ export default function MentorStudentRoadmap() {
   const [editItemResourceUrl, setEditItemResourceUrl] = useState("");
   const [newPartTitle, setNewPartTitle] = useState("");
   const [newPartResourceUrl, setNewPartResourceUrl] = useState("");
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const skillForm = useForm<AddSkillFormData>({
@@ -238,6 +240,26 @@ export default function MentorStudentRoadmap() {
     },
   });
 
+  const reorderItemMutation = useMutation({
+    mutationFn: (data: { itemId: string; newOrder: number }) =>
+      apiRequest("PATCH", `/api/roadmap/individual/${menteeId}/items/${data.itemId}/reorder`, { order: data.newOrder }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
+      setDraggedItemId(null);
+      setDragOverItemId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to reorder part",
+        description: error.message,
+      });
+      setDraggedItemId(null);
+      setDragOverItemId(null);
+    },
+  });
+
   const resetRoadmapMutation = useMutation({
     mutationFn: () =>
       apiRequest("POST", `/api/roadmap/individual/${menteeId}/reset`, {}),
@@ -396,10 +418,35 @@ export default function MentorStudentRoadmap() {
                         {skill.items.map((item, itemIndex) => (
                           <div
                             key={item.id}
-                            className="flex items-center justify-between gap-4 rounded-md border p-3 hover-elevate"
+                            draggable
+                            onDragStart={() => setDraggedItemId(item.id)}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setDragOverItemId(item.id);
+                            }}
+                            onDragLeave={() => setDragOverItemId(null)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (draggedItemId && draggedItemId !== item.id) {
+                                reorderItemMutation.mutate({
+                                  itemId: draggedItemId,
+                                  newOrder: itemIndex,
+                                });
+                              }
+                              setDraggedItemId(null);
+                              setDragOverItemId(null);
+                            }}
+                            className={`flex items-center justify-between gap-4 rounded-md border p-3 transition-all ${
+                              draggedItemId === item.id
+                                ? "opacity-50 bg-muted"
+                                : dragOverItemId === item.id
+                                ? "bg-accent/50 border-accent"
+                                : "hover-elevate"
+                            }`}
                             data-testid={`item-${item.id}`}
                           >
-                            <div className="flex items-center gap-3 flex-1">
+                            <div className="flex items-center gap-3 flex-1 cursor-grab active:cursor-grabbing">
+                              <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                               <Badge variant="outline" className="min-w-[2rem] justify-center">
                                 {itemIndex + 1}
                               </Badge>
