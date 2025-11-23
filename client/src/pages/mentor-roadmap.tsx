@@ -23,11 +23,6 @@ interface SkillWithItems extends Skill {
 const addSkillSchema = z.object({
   name: z.string().min(2, "Skill name must be at least 2 characters"),
   description: z.string().optional(),
-  items: z.array(z.object({
-    title: z.string().min(1, "Item title is required"),
-    resourceUrl: z.string().optional(),
-    order: z.number(),
-  })).min(1, "Must add at least one part"),
 });
 
 type AddSkillFormData = z.infer<typeof addSkillSchema>;
@@ -51,11 +46,11 @@ export default function MentorRoadmap() {
 
   const skillForm = useForm<AddSkillFormData>({
     resolver: zodResolver(addSkillSchema),
-    defaultValues: { name: "", description: "", items: [] },
+    defaultValues: { name: "", description: "" },
   });
 
   const addSkillMutation = useMutation({
-    mutationFn: async (data: AddSkillFormData) => {
+    mutationFn: async (data: AddSkillFormData & { items: any[] }) => {
       // Create skill first
       const skillRes = await apiRequest("POST", "/api/roadmap/skills", {
         name: data.name,
@@ -76,7 +71,7 @@ export default function MentorRoadmap() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
       setIsAddSkillOpen(false);
-      skillForm.reset();
+      skillForm.reset({ name: "", description: "" });
       setSkillItems([]);
       toast({
         title: "Skill added!",
@@ -206,15 +201,22 @@ export default function MentorRoadmap() {
   };
 
   const onSubmit = (data: AddSkillFormData) => {
-    const finalData = {
+    if (skillItems.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No parts added",
+        description: "Please add at least one part to the skill",
+      });
+      return;
+    }
+    addSkillMutation.mutate({
       ...data,
       items: skillItems.map((item, idx) => ({
         title: item.title,
         resourceUrl: item.resourceUrl,
         order: idx,
       })),
-    };
-    addSkillMutation.mutate(finalData);
+    });
   };
 
   return (
@@ -320,7 +322,7 @@ export default function MentorRoadmap() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={addSkillMutation.isPending || skillItems.length === 0}
+                disabled={addSkillMutation.isPending}
                 data-testid="button-submit-skill"
               >
                 {addSkillMutation.isPending ? "Adding..." : "Add Skill"}
