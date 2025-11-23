@@ -27,7 +27,7 @@ interface IndividualSkillWithItems {
   name: string;
   description?: string;
   items: any[];
-  isIndividual: boolean;
+  isIndividual?: boolean;
 }
 
 const addSkillSchema = z.object({
@@ -58,6 +58,8 @@ export default function MentorStudentRoadmap() {
   const [newPartResourceUrl, setNewPartResourceUrl] = useState("");
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+  const [draggedSkillId, setDraggedSkillId] = useState<string | null>(null);
+  const [dragOverSkillId, setDragOverSkillId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const skillForm = useForm<AddSkillFormData>({
@@ -261,6 +263,30 @@ export default function MentorStudentRoadmap() {
     },
   });
 
+  const reorderSkillMutation = useMutation({
+    mutationFn: (data: { skillId: string; newOrder: number }) =>
+      apiRequest("PATCH", `/api/roadmap/individual/${menteeId}/skills/${data.skillId}/reorder`, { order: data.newOrder }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
+      setDraggedSkillId(null);
+      setDragOverSkillId(null);
+      toast({
+        title: "Skill reordered!",
+        description: "Skill order has been updated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to reorder skill",
+        description: error.message,
+      });
+      setDraggedSkillId(null);
+      setDragOverSkillId(null);
+    },
+  });
+
   const resetRoadmapMutation = useMutation({
     mutationFn: () =>
       apiRequest("POST", `/api/roadmap/individual/${menteeId}/reset`, {}),
@@ -352,7 +378,34 @@ export default function MentorStudentRoadmap() {
       ) : combinedSkills.length > 0 ? (
         <Accordion type="multiple" className="space-y-4">
           {combinedSkills.map((skill, skillIndex) => (
-            <Card key={skill.id}>
+            <Card 
+              key={skill.id}
+              draggable
+              onDragStart={() => setDraggedSkillId(skill.id)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverSkillId(skill.id);
+              }}
+              onDragLeave={() => setDragOverSkillId(null)}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (draggedSkillId && draggedSkillId !== skill.id) {
+                  reorderSkillMutation.mutate({
+                    skillId: draggedSkillId,
+                    newOrder: skillIndex,
+                  });
+                }
+                setDraggedSkillId(null);
+                setDragOverSkillId(null);
+              }}
+              className={`cursor-grab active:cursor-grabbing transition-all ${
+                draggedSkillId === skill.id
+                  ? "opacity-50 bg-muted"
+                  : dragOverSkillId === skill.id
+                  ? "bg-accent/50 border-accent"
+                  : ""
+              }`}
+            >
               <AccordionItem value={skill.id} className="border-0">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">

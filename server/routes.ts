@@ -1106,6 +1106,25 @@
       }
     });
   
+    app.patch("/api/roadmap/individual/:menteeId/skills/:skillId/reorder", requireMentor, async (req: Request, res: Response) => {
+      try {
+        const { menteeId, skillId } = req.params;
+        const { order } = req.body;
+        
+        // Verify mentee belongs to this mentor
+        const mentee = await storage.getUser(menteeId);
+        if (!mentee || mentee.mentorId !== req.session.userId) {
+          return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
+        }
+  
+        await storage.reorderSkillForMentee(skillId, order, menteeId);
+        res.json({ message: "Skill reordered" });
+      } catch (error) {
+        console.error("Reorder skill for mentee error:", error);
+        res.status(500).json({ message: "Failed to reorder skill" });
+      }
+    });
+  
     // Payment portfolio endpoint
     app.get("/api/mentor/payment-portfolio", requireMentor, async (req: Request, res: Response) => {
       try {
