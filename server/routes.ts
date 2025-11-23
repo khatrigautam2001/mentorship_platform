@@ -557,6 +557,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/roadmap/items/:id", requireMentor, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { title, resourceUrl } = req.body;
+      
+      const item = await storage.updateRoadmapItem(id, {
+        title,
+        resourceUrl: resourceUrl || null,
+      });
+      
+      res.json(item);
+    } catch (error) {
+      console.error("Update item error:", error);
+      res.status(500).json({ message: "Failed to update item" });
+    }
+  });
+
   app.delete("/api/roadmap/items/:id", requireMentor, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;

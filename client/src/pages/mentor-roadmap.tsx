@@ -37,12 +37,16 @@ export default function MentorRoadmap() {
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isAddPartOpen, setIsAddPartOpen] = useState(false);
   const [isEditSkillOpen, setIsEditSkillOpen] = useState(false);
+  const [isEditPartOpen, setIsEditPartOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<SkillWithItems | null>(null);
+  const [selectedPart, setSelectedPart] = useState<RoadmapItem | null>(null);
   const [skillItems, setSkillItems] = useState<SkillItem[]>([]);
   const [newPartTitle, setNewPartTitle] = useState("");
   const [newPartResourceUrl, setNewPartResourceUrl] = useState("");
   const [editSkillName, setEditSkillName] = useState("");
   const [editSkillDescription, setEditSkillDescription] = useState("");
+  const [editPartTitle, setEditPartTitle] = useState("");
+  const [editPartResourceUrl, setEditPartResourceUrl] = useState("");
   const { toast } = useToast();
 
   const { data: skills, isLoading } = useQuery<SkillWithItems[]>({
@@ -182,6 +186,34 @@ export default function MentorRoadmap() {
       toast({
         variant: "destructive",
         title: "Failed to update skill",
+        description: error.message,
+      });
+    },
+  });
+
+  const editPartMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedPart) throw new Error("No part selected");
+      return apiRequest("PATCH", `/api/roadmap/items/${selectedPart.id}`, {
+        title: editPartTitle,
+        resourceUrl: editPartResourceUrl || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
+      setIsEditPartOpen(false);
+      setEditPartTitle("");
+      setEditPartResourceUrl("");
+      setSelectedPart(null);
+      toast({
+        title: "Part updated!",
+        description: "Part has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to update part",
         description: error.message,
       });
     },
@@ -434,15 +466,30 @@ export default function MentorRoadmap() {
                                 </a>
                               )}
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deleteItemMutation.mutate(item.id)}
-                              disabled={deleteItemMutation.isPending}
-                              data-testid={`button-delete-item-${item.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setSelectedPart(item);
+                                  setEditPartTitle(item.title);
+                                  setEditPartResourceUrl(item.resourceUrl || "");
+                                  setIsEditPartOpen(true);
+                                }}
+                                data-testid={`button-edit-item-${item.id}`}
+                              >
+                                <Pencil className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteItemMutation.mutate(item.id)}
+                                disabled={deleteItemMutation.isPending}
+                                data-testid={`button-delete-item-${item.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -571,6 +618,59 @@ export default function MentorRoadmap() {
                 data-testid="button-submit-edit-skill"
               >
                 {editSkillMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Part Dialog */}
+      <Dialog open={isEditPartOpen} onOpenChange={setIsEditPartOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Part</DialogTitle>
+            <DialogDescription>
+              Update the part details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-part-title">Part Title</Label>
+              <Input
+                id="edit-part-title"
+                value={editPartTitle}
+                onChange={(e) => setEditPartTitle(e.target.value)}
+                data-testid="input-edit-part-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-part-resource">Resource URL (Optional)</Label>
+              <Input
+                id="edit-part-resource"
+                placeholder="https://example.com"
+                value={editPartResourceUrl}
+                onChange={(e) => setEditPartResourceUrl(e.target.value)}
+                data-testid="input-edit-part-resource"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditPartOpen(false);
+                  setEditPartTitle("");
+                  setEditPartResourceUrl("");
+                  setSelectedPart(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => editPartMutation.mutate()}
+                disabled={!editPartTitle.trim() || editPartMutation.isPending}
+                data-testid="button-submit-edit-part"
+              >
+                {editPartMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>
