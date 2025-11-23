@@ -86,6 +86,7 @@ export const individualRoadmapItems = pgTable("individual_roadmap_items", {
   title: text("title").notNull(),
   order: integer("order").notNull(),
   isMockInterview: boolean("is_mock_interview").default(false).notNull(),
+  resourceUrl: text("resource_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
