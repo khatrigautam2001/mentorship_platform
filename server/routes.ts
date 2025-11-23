@@ -1090,7 +1090,7 @@
           return res.status(403).json({ message: "Forbidden - Mentee does not belong to you" });
         }
   
-        await storage.reorderIndividualRoadmapItem(itemId, order);
+        await storage.reorderIndividualRoadmapItem(itemId, order, menteeId);
         res.json({ message: "Item reordered" });
       } catch (error) {
         console.error("Reorder individual item error:", error);
