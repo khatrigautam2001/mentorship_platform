@@ -226,7 +226,7 @@ export default function MenteeLearning() {
                                   </div>
                                 </div>
                                 
-                                {unlocked && !completed && (
+                                {unlocked && (
                                   <div className="flex items-center gap-2">
                                     {item.resourceUrl && (
                                       <a href={item.resourceUrl} target="_blank" rel="noopener noreferrer">
@@ -236,46 +236,50 @@ export default function MenteeLearning() {
                                           data-testid={`button-resource-${item.id}`}
                                         >
                                           <ExternalLink className="h-4 w-4 mr-1" />
-                                          Start
+                                          Open
                                         </Button>
                                       </a>
                                     )}
-                                    {item.isMockInterview ? (
-                                      mockStatus === "pending" ? (
-                                        <Badge variant="secondary">
-                                          <Clock className="h-3 w-3 mr-1" />
-                                          Waiting for Approval
-                                        </Badge>
-                                      ) : mockStatus === "completed" ? (
-                                        <Badge variant="secondary" className="text-green-700 dark:text-green-400">
-                                          <Check className="h-3 w-3 mr-1" />
-                                          Completed
-                                        </Badge>
-                                      ) : (
-                                        <Button
-                                          size="sm"
-                                          onClick={() => requestMockInterviewMutation.mutate(skill.id)}
-                                          disabled={requestMockInterviewMutation.isPending}
-                                          data-testid={`button-request-mock-${item.id}`}
-                                        >
-                                          Request Approval
-                                        </Button>
-                                      )
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => markCompleteMutation.mutate(item.id)}
-                                        disabled={markCompleteMutation.isPending}
-                                        data-testid={`button-complete-${item.id}`}
-                                      >
-                                        <Check className="h-4 w-4 mr-1" />
-                                        Mark Complete
-                                      </Button>
+                                    {!completed && (
+                                      <>
+                                        {item.isMockInterview ? (
+                                          mockStatus === "pending" ? (
+                                            <Badge variant="secondary">
+                                              <Clock className="h-3 w-3 mr-1" />
+                                              Waiting for Approval
+                                            </Badge>
+                                          ) : mockStatus === "completed" ? (
+                                            <Badge variant="secondary" className="text-green-700 dark:text-green-400">
+                                              <Check className="h-3 w-3 mr-1" />
+                                              Completed
+                                            </Badge>
+                                          ) : (
+                                            <Button
+                                              size="sm"
+                                              onClick={() => requestMockInterviewMutation.mutate(skill.id)}
+                                              disabled={requestMockInterviewMutation.isPending}
+                                              data-testid={`button-request-mock-${item.id}`}
+                                            >
+                                              Request Approval
+                                            </Button>
+                                          )
+                                        ) : (
+                                          <Button
+                                            size="sm"
+                                            onClick={() => markCompleteMutation.mutate(item.id)}
+                                            disabled={markCompleteMutation.isPending}
+                                            data-testid={`button-complete-${item.id}`}
+                                          >
+                                            <Check className="h-4 w-4 mr-1" />
+                                            Mark Complete
+                                          </Button>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 )}
 
-                                {completed && (
+                                {completed && !unlocked && (
                                   <Badge variant="secondary" className="text-green-700 dark:text-green-400">
                                     Completed
                                   </Badge>
