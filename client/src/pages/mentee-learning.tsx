@@ -45,7 +45,7 @@ export default function MenteeLearning() {
           ...previousData.progress,
           { itemId, completed: true }
         ];
-        
+
         // Calculate new overall progress
         const totalItems = previousData.skills.reduce((sum, skill) => sum + skill.items.length, 0);
         const completedCount = newProgress.filter(p => p.completed).length;
@@ -225,7 +225,7 @@ export default function MenteeLearning() {
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 {unlocked && (
                                   <div className="flex items-center gap-2">
                                     {item.resourceUrl && (

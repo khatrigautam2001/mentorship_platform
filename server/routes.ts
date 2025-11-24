@@ -745,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requireMentor,
     async (req: Request, res: Response) => {
       try {
-        const { skillId, title, resourceUrl, isMockInterview } = req.body;
+        const { skillId, title, resourceUrl } = req.body;
 
         const existingItems = await storage.getRoadmapItemsBySkillId(skillId);
         const maxOrder =
@@ -757,7 +757,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           skillId,
           title,
           order: maxOrder + 1,
-          isMockInterview: isMockInterview || false,
+          isMockInterview: false,
           resourceUrl: resourceUrl || null,
         });
 
@@ -775,12 +775,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
-        const { title, resourceUrl, isMockInterview } = req.body;
+        const { title, resourceUrl } = req.body;
 
         const item = await storage.updateRoadmapItem(id, {
           title,
           resourceUrl: resourceUrl || null,
-          isMockInterview: isMockInterview !== undefined ? isMockInterview : undefined,
         });
 
         res.json(item);
@@ -1340,7 +1339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const { menteeId } = req.params;
-        const { name, description, isMockInterview } = req.body;
+        const { name, description } = req.body;
 
         // Verify mentee belongs to this mentor
         const mentee = await storage.getUser(menteeId);
@@ -1354,7 +1353,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           menteeId,
           name,
           description,
-          isMockInterview,
         );
         res.json(skill);
       } catch (error) {

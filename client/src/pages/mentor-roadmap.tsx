@@ -75,7 +75,7 @@ export default function MentorRoadmap() {
         name: data.name,
         description: data.description,
       });
-      
+
       // Then add all items to the skill
       for (const item of data.items) {
         await apiRequest("POST", "/api/roadmap/items", {
@@ -84,7 +84,7 @@ export default function MentorRoadmap() {
           resourceUrl: item.resourceUrl || null,
         });
       }
-      
+
       return skillRes;
     },
     onSuccess: () => {

@@ -212,9 +212,9 @@ export class DatabaseStorage implements IStorage {
   async getMockInterviewRequestsByMentorId(mentorId: string): Promise<MockInterviewRequest[]> {
     const mentees = await this.getMenteesByMentorId(mentorId);
     const menteeIds = mentees.map(m => m.id);
-    
+
     if (menteeIds.length === 0) return [];
-    
+
     return db
       .select()
       .from(mockInterviewRequests)
@@ -314,7 +314,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(individualSkills).where(eq(individualSkills.menteeId, menteeId)).orderBy(individualSkills.order);
   }
 
-  async createIndividualSkill(menteeId: string, name: string, description?: string, isMockInterview?: boolean): Promise<any> {
+  async createIndividualSkill(menteeId: string, name: string, description?: string): Promise<any> {
     const existingSkills = await db.select().from(individualSkills).where(eq(individualSkills.menteeId, menteeId));
     const [skill] = await db
       .insert(individualSkills)
@@ -322,7 +322,6 @@ export class DatabaseStorage implements IStorage {
         menteeId,
         name,
         description: description || null,
-        isMockInterview: isMockInterview || false,
         order: existingSkills.length,
       })
       .returning();
@@ -349,22 +348,22 @@ export class DatabaseStorage implements IStorage {
   async reorderRoadmapItem(itemId: string, newPositionIndex: number): Promise<void> {
     const [item] = await db.select().from(roadmapItems).where(eq(roadmapItems.id, itemId));
     if (!item) throw new Error("Item not found");
-    
+
     // Get all items in the same skill, ordered by current order
     const allItems = await db.select().from(roadmapItems)
       .where(eq(roadmapItems.skillId, item.skillId))
       .orderBy(roadmapItems.order);
-    
+
     // Find the current position of the item being moved
     const currentPositionIndex = allItems.findIndex(i => i.id === itemId);
     if (currentPositionIndex === -1) throw new Error("Item not found in skill");
-    
+
     // If moving to the same position, do nothing
     if (currentPositionIndex === newPositionIndex) return;
-    
+
     // Create new array without the dragged item
     const itemsWithoutDragged = allItems.filter(i => i.id !== itemId);
-    
+
     // Insert the dragged item at the new position
     const movedItem = allItems[currentPositionIndex];
     const reorderedItems = [
@@ -372,7 +371,7 @@ export class DatabaseStorage implements IStorage {
       movedItem,
       ...itemsWithoutDragged.slice(newPositionIndex),
     ];
-    
+
     // Update all items with new order values (0, 1, 2, 3, ...)
     for (let i = 0; i < reorderedItems.length; i++) {
       await db.update(roadmapItems).set({ order: i }).where(eq(roadmapItems.id, reorderedItems[i].id));
@@ -382,17 +381,17 @@ export class DatabaseStorage implements IStorage {
   async reorderSkill(skillId: string, newPositionIndex: number): Promise<void> {
     // Get all skills ordered by current order
     const allSkills = await db.select().from(skills).orderBy(skills.order);
-    
+
     // Find the current position of the skill being moved
     const currentPositionIndex = allSkills.findIndex(s => s.id === skillId);
     if (currentPositionIndex === -1) throw new Error("Skill not found");
-    
+
     // If moving to the same position, do nothing
     if (currentPositionIndex === newPositionIndex) return;
-    
+
     // Create new array without the dragged skill
     const skillsWithoutDragged = allSkills.filter(s => s.id !== skillId);
-    
+
     // Insert the dragged skill at the new position
     const movedSkill = allSkills[currentPositionIndex];
     const reorderedSkills = [
@@ -400,7 +399,7 @@ export class DatabaseStorage implements IStorage {
       movedSkill,
       ...skillsWithoutDragged.slice(newPositionIndex),
     ];
-    
+
     // Update all skills with new order values (0, 1, 2, 3, ...)
     for (let i = 0; i < reorderedSkills.length; i++) {
       await db.update(skills).set({ order: i }).where(eq(skills.id, reorderedSkills[i].id));
@@ -410,11 +409,11 @@ export class DatabaseStorage implements IStorage {
   async reorderIndividualRoadmapItem(itemId: string, newOrder: number, menteeId: string): Promise<void> {
     // First check if item is in individualRoadmapItems (already customized)
     const [individualItem] = await db.select().from(individualRoadmapItems).where(eq(individualRoadmapItems.id, itemId));
-    
+
     if (individualItem) {
       // Item is already individual, just reorder within the appropriate scope
       const isCustomSkill = individualItem.individualSkillId !== null;
-      
+
       // Get all items for this skill/scope
       let allItems;
       if (isCustomSkill) {
@@ -426,7 +425,7 @@ export class DatabaseStorage implements IStorage {
           .where(eq(individualRoadmapItems.skillId, individualItem.skillId))
           .orderBy(individualRoadmapItems.order);
       }
-      
+
       // Create a reordered list: remove item from current position, insert at new position
       const itemsWithoutDragged = allItems.filter(i => i.id !== itemId);
       const reorderedItems = [
@@ -434,7 +433,7 @@ export class DatabaseStorage implements IStorage {
         individualItem,
         ...itemsWithoutDragged.slice(newOrder),
       ];
-      
+
       // Update all items with their new order values
       for (let i = 0; i < reorderedItems.length; i++) {
         await db.update(individualRoadmapItems).set({ order: i }).where(eq(individualRoadmapItems.id, reorderedItems[i].id));
@@ -443,18 +442,18 @@ export class DatabaseStorage implements IStorage {
       // Item is from roadmapItems (global), need to convert all items in that skill to individual items first
       const [globalItem] = await db.select().from(roadmapItems).where(eq(roadmapItems.id, itemId));
       if (!globalItem) throw new Error("Item not found");
-      
+
       // Check if there are already individual items for this skill
       const existingIndividualItems = await db.select().from(individualRoadmapItems)
         .where(and(eq(individualRoadmapItems.skillId, globalItem.skillId), eq(individualRoadmapItems.menteeId, menteeId)))
         .orderBy(individualRoadmapItems.order);
-      
+
       if (existingIndividualItems.length === 0) {
         // Convert all global items of this skill to individual items
         const allGlobalItems = await db.select().from(roadmapItems)
           .where(eq(roadmapItems.skillId, globalItem.skillId))
           .orderBy(roadmapItems.order);
-        
+
         const createdIndividualItems = await Promise.all(
           allGlobalItems.map(async (item, index) => {
             const [created] = await db.insert(individualRoadmapItems).values({
@@ -469,11 +468,11 @@ export class DatabaseStorage implements IStorage {
             return created;
           })
         );
-        
+
         // Find the newly created item that corresponds to the dragged item
         const draggedItemIndex = allGlobalItems.findIndex(i => i.id === itemId);
         const draggedCreatedItem = createdIndividualItems[draggedItemIndex];
-        
+
         // Reorder the items using the same list-based approach
         const itemsWithoutDragged = createdIndividualItems.filter((_, idx) => idx !== draggedItemIndex);
         const reorderedItems = [
@@ -481,7 +480,7 @@ export class DatabaseStorage implements IStorage {
           draggedCreatedItem,
           ...itemsWithoutDragged.slice(newOrder),
         ];
-        
+
         // Update all items with their new order values
         for (let i = 0; i < reorderedItems.length; i++) {
           await db.update(individualRoadmapItems).set({ order: i }).where(eq(individualRoadmapItems.id, reorderedItems[i].id));
@@ -489,11 +488,11 @@ export class DatabaseStorage implements IStorage {
       } else {
         // Individual items already exist for this skill, just update the order in the existing items
         const allItems = existingIndividualItems.sort((a, b) => a.order - b.order);
-        
+
         // Find the individual item that corresponds to this global item
         const correspondingIndividualItem = allItems.find(i => i.title === globalItem.title && i.skillId === globalItem.skillId);
         if (!correspondingIndividualItem) throw new Error("Corresponding individual item not found");
-        
+
         // Reorder the items using the same list-based approach
         const itemsWithoutDragged = allItems.filter(i => i.id !== correspondingIndividualItem.id);
         const reorderedItems = [
@@ -501,7 +500,7 @@ export class DatabaseStorage implements IStorage {
           correspondingIndividualItem,
           ...itemsWithoutDragged.slice(newOrder),
         ];
-        
+
         // Update all items with their new order values
         for (let i = 0; i < reorderedItems.length; i++) {
           await db.update(individualRoadmapItems).set({ order: i }).where(eq(individualRoadmapItems.id, reorderedItems[i].id));
@@ -516,18 +515,18 @@ export class DatabaseStorage implements IStorage {
     const allIndividualSkills = await db.select().from(individualSkills)
       .where(eq(individualSkills.menteeId, menteeId))
       .orderBy(individualSkills.order);
-    
+
     // Build combined list like the frontend does
     const combinedList = [...allGlobalSkills, ...allIndividualSkills] as any[];
     combinedList.sort((a, b) => a.order - b.order);
-    
+
     // Find the dragged skill in the combined list
     const currentPositionInCombined = combinedList.findIndex(s => s.id === skillId);
     if (currentPositionInCombined === -1) throw new Error("Skill not found in combined list");
-    
+
     // Remove it from its current position
     const combinedWithoutDragged = combinedList.filter(s => s.id !== skillId);
-    
+
     // Insert it at the new position
     const draggedSkill = combinedList[currentPositionInCombined];
     const reorderedCombined = [
@@ -535,7 +534,7 @@ export class DatabaseStorage implements IStorage {
       draggedSkill,
       ...combinedWithoutDragged.slice(newPositionInCombinedList),
     ];
-    
+
     // Reassign order values based on position in reordered combined list
     // All skills (global and individual) get unique order values based on their position
     for (let i = 0; i < reorderedCombined.length; i++) {

@@ -33,7 +33,6 @@ interface IndividualSkillWithItems {
 const addSkillSchema = z.object({
   name: z.string().min(2, "Skill name must be at least 2 characters"),
   description: z.string().optional(),
-  isMockInterview: z.boolean().default(false),
 });
 
 type AddSkillFormData = z.infer<typeof addSkillSchema>;
@@ -65,7 +64,7 @@ export default function MentorStudentRoadmap() {
 
   const skillForm = useForm<AddSkillFormData>({
     resolver: zodResolver(addSkillSchema),
-    defaultValues: { name: "", description: "", isMockInterview: false },
+    defaultValues: { name: "", description: "" },
   });
 
   const { data: roadmap, isLoading, refetch } = useQuery<SkillWithItems[]>({
@@ -86,14 +85,13 @@ export default function MentorStudentRoadmap() {
       apiRequest("POST", `/api/roadmap/individual/${menteeId}/skills`, {
         name: data.name,
         description: data.description || null,
-        isMockInterview: data.isMockInterview,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setIsAddSkillOpen(false);
-      skillForm.reset({ name: "", description: "", isMockInterview: false });
+      skillForm.reset({ name: "", description: "" });
       toast({
         title: "Skill added!",
         description: "New skill has been added to the roadmap",
