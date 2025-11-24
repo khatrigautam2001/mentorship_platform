@@ -377,7 +377,10 @@
         // If not found in global items, check individual roadmap items for this mentee
         if (!mockItem) {
           const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(request.menteeId);
-          mockItem = individualItems.find(item => item.skillId === request.skillId && item.isMockInterview);
+          // Check for items with either skillId or individualSkillId matching the request.skillId
+          mockItem = individualItems.find(item => 
+            (item.skillId === request.skillId || item.individualSkillId === request.skillId) && item.isMockInterview
+          );
         }
         
         if (mockItem) {
