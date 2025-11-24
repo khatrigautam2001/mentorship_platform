@@ -224,6 +224,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
             }
 
+            // Sort items within each skill by order
+            skillsWithItems.forEach((skill) => {
+              skill.items.sort((a, b) => a.order - b.order);
+            });
+
             // Calculate progress
             const allItems = skillsWithItems.flatMap((s) => s.items);
             const completedItems = progressRecords.filter(
@@ -901,6 +906,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Sort all skills by order
           skillsWithItems.sort((a, b) => a.order - b.order);
         }
+
+        // Sort items within each skill by order
+        skillsWithItems.forEach((skill) => {
+          skill.items.sort((a, b) => a.order - b.order);
+        });
 
         // Calculate overall progress
         const allItems = skillsWithItems.flatMap((s) => s.items);
