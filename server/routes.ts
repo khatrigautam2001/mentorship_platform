@@ -469,28 +469,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Request not found" });
         }
 
-        // Award badge
-        await storage.createBadge({
-          menteeId: request.menteeId,
-          skillId: request.skillId,
-        });
+        // Award badge only if this is a global skill
+        if (request.skillId) {
+          await storage.createBadge({
+            menteeId: request.menteeId,
+            skillId: request.skillId,
+          });
+        }
 
         // Mark the mock interview item as complete
-        // First check global roadmap items
+        // First check global roadmap items (if skillId exists)
         let mockItem: any = null;
-        const skillItems = await storage.getRoadmapItemsBySkillId(
-          request.skillId,
-        );
-        mockItem = skillItems.find((item) => item.isMockInterview);
+        if (request.skillId) {
+          const skillItems = await storage.getRoadmapItemsBySkillId(
+            request.skillId,
+          );
+          mockItem = skillItems.find((item) => item.isMockInterview);
+        }
 
         // If not found in global items, check individual roadmap items for this mentee
         if (!mockItem) {
           const individualItems =
             await storage.getIndividualRoadmapItemsByMenteeId(request.menteeId);
-          // Check for items with either skillId or individualSkillId matching the request.skillId
-          mockItem = individualItems.find(
-            (item) => item.skillId === request.skillId && item.isMockInterview,
-          );
+          // Check for items with either skillId or individualSkillId matching the request
+          if (request.skillId) {
+            mockItem = individualItems.find(
+              (item) => item.skillId === request.skillId && item.isMockInterview,
+            );
+          } else if (request.individualSkillId) {
+            mockItem = individualItems.find(
+              (item) => item.individualSkillId === request.individualSkillId && item.isMockInterview,
+            );
+          }
         }
 
         if (mockItem) {
