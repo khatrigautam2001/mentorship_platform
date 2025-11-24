@@ -314,7 +314,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(individualSkills).where(eq(individualSkills.menteeId, menteeId)).orderBy(individualSkills.order);
   }
 
-  async createIndividualSkill(menteeId: string, name: string, description?: string): Promise<any> {
+  async createIndividualSkill(menteeId: string, name: string, description?: string, isMockInterview?: boolean): Promise<any> {
     const existingSkills = await db.select().from(individualSkills).where(eq(individualSkills.menteeId, menteeId));
     const [skill] = await db
       .insert(individualSkills)
@@ -322,6 +322,7 @@ export class DatabaseStorage implements IStorage {
         menteeId,
         name,
         description: description || null,
+        isMockInterview: isMockInterview || false,
         order: existingSkills.length,
       })
       .returning();

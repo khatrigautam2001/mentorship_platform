@@ -33,6 +33,7 @@ interface IndividualSkillWithItems {
 const addSkillSchema = z.object({
   name: z.string().min(2, "Skill name must be at least 2 characters"),
   description: z.string().optional(),
+  isMockInterview: z.boolean().default(false),
 });
 
 type AddSkillFormData = z.infer<typeof addSkillSchema>;
@@ -64,7 +65,7 @@ export default function MentorStudentRoadmap() {
 
   const skillForm = useForm<AddSkillFormData>({
     resolver: zodResolver(addSkillSchema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", isMockInterview: false },
   });
 
   const { data: roadmap, isLoading, refetch } = useQuery<SkillWithItems[]>({
@@ -85,13 +86,14 @@ export default function MentorStudentRoadmap() {
       apiRequest("POST", `/api/roadmap/individual/${menteeId}/skills`, {
         name: data.name,
         description: data.description || null,
+        isMockInterview: data.isMockInterview,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setIsAddSkillOpen(false);
-      skillForm.reset({ name: "", description: "" });
+      skillForm.reset({ name: "", description: "", isMockInterview: false });
       toast({
         title: "Skill added!",
         description: "New skill has been added to the roadmap",
@@ -600,6 +602,19 @@ export default function MentorStudentRoadmap() {
                 {...skillForm.register("description")}
                 data-testid="input-skill-description"
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isMockInterview"
+                {...skillForm.register("isMockInterview")}
+                data-testid="checkbox-skill-mock-interview"
+                className="h-4 w-4 rounded border-input"
+              />
+              <Label htmlFor="isMockInterview" className="text-sm font-medium cursor-pointer">
+                This is a mock interview item
+              </Label>
             </div>
 
             <Button
