@@ -967,6 +967,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           nextUnlocked = allItems[0].id;
         }
 
+        console.log("Learning data response:", {
+          skillsCount: skillsWithItems.length,
+          progressCount: progressRecords.length,
+          overallProgress,
+          nextUnlocked,
+          firstSkill: skillsWithItems[0],
+        });
+
         res.json({
           skills: skillsWithItems,
           progress: progressRecords,
