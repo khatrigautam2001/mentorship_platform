@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Lock, Play, ExternalLink } from "lucide-react";
+import { Check, Lock, Play, Award as AwardIcon, Clock, ExternalLink } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,7 @@ interface LearningData {
   progress: ProgressType[];
   overallProgress: number;
   nextUnlocked: string | null;
+  mockInterviewStatuses: Record<string, string>;
 }
 
 export default function MenteeLearning() {
@@ -81,8 +82,32 @@ export default function MenteeLearning() {
     },
   });
 
+  const requestMockInterviewMutation = useMutation({
+    mutationFn: (skillId: string) =>
+      apiRequest("POST", `/api/mentee/request-mock-interview/${skillId}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
+      toast({
+        title: "Request submitted!",
+        description: "Your mentor will review your mock interview request",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to submit request",
+        description: error.message,
+      });
+    },
+  });
+
   const isItemCompleted = (itemId: string, skill?: SkillWithItems) => {
-    return learningData?.progress.some(p => p.itemId === itemId && p.completed) || false;
+    const isProgressCompleted = learningData?.progress.some(p => p.itemId === itemId && p.completed) || false;
+    // If this is a mock interview item and has been approved, treat as completed
+    if (skill && skill.items.some(item => item.id === itemId && item.isMockInterview && learningData?.mockInterviewStatuses[skill.id] === "completed")) {
+      return true;
+    }
+    return isProgressCompleted;
   };
 
   const isItemUnlocked = (itemId: string, skill?: SkillWithItems) => {
@@ -168,6 +193,7 @@ export default function MenteeLearning() {
                           {skill.items.map((item, itemIndex) => {
                             const completed = isItemCompleted(item.id, skill);
                             const unlocked = isItemUnlocked(item.id, skill);
+                            const mockStatus = item.isMockInterview ? learningData.mockInterviewStatuses[skill.id] : null;
 
                             return (
                               <div
@@ -191,6 +217,12 @@ export default function MenteeLearning() {
                                     <p className={`text-sm font-medium ${!unlocked ? "text-muted-foreground" : ""}`}>
                                       {item.title}
                                     </p>
+                                    {item.isMockInterview && (
+                                      <Badge variant="secondary" className="text-xs mt-1">
+                                        <AwardIcon className="h-3 w-3 mr-1" />
+                                        Mock Interview Required
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                                 
@@ -209,15 +241,40 @@ export default function MenteeLearning() {
                                       </a>
                                     )}
                                     {!completed && (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => markCompleteMutation.mutate(item.id)}
-                                        disabled={markCompleteMutation.isPending}
-                                        data-testid={`button-complete-${item.id}`}
-                                      >
-                                        <Check className="h-4 w-4 mr-1" />
-                                        Mark Complete
-                                      </Button>
+                                      <>
+                                        {item.isMockInterview ? (
+                                          mockStatus === "pending" ? (
+                                            <Badge variant="secondary">
+                                              <Clock className="h-3 w-3 mr-1" />
+                                              Waiting for Approval
+                                            </Badge>
+                                          ) : mockStatus === "completed" ? (
+                                            <Badge variant="secondary" className="text-green-700 dark:text-green-400">
+                                              <Check className="h-3 w-3 mr-1" />
+                                              Completed
+                                            </Badge>
+                                          ) : (
+                                            <Button
+                                              size="sm"
+                                              onClick={() => requestMockInterviewMutation.mutate(skill.id)}
+                                              disabled={requestMockInterviewMutation.isPending}
+                                              data-testid={`button-request-mock-${item.id}`}
+                                            >
+                                              Request Approval
+                                            </Button>
+                                          )
+                                        ) : (
+                                          <Button
+                                            size="sm"
+                                            onClick={() => markCompleteMutation.mutate(item.id)}
+                                            disabled={markCompleteMutation.isPending}
+                                            data-testid={`button-complete-${item.id}`}
+                                          >
+                                            <Check className="h-4 w-4 mr-1" />
+                                            Mark Complete
+                                          </Button>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 )}
