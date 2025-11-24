@@ -22,7 +22,7 @@ export default function Home() {
     {
       icon: Zap,
       title: "Interview Anxiety",
-      description: "Data analytics interviews test both technical skills and business thinking—being interview-ready is stressful.",
+      description: "Data analytics interviews test both technical skills and business thinking. Being interview-ready is stressful.",
     },
     {
       icon: Award,
@@ -111,7 +111,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
-              <img src="/attached_assets/generated_images/data_analytics_dashboard_interface.png" alt="Data Analytics Dashboard" className="w-full h-full object-cover" />
+              <img src="../attached_assets/generated_images/data_analytics_dashboard_interface.png" alt="Data Analytics Dashboard" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function Home() {
               </p>
             </div>
             <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
-              <img src="/attached_assets/generated_images/mentor_teaching_data_analytics.png" alt="Mentor Teaching Data Analytics" className="w-full h-full object-cover" />
+              <img src="../attached_assets/generated_images/mentor_teaching_data_analytics.png" alt="Mentor Teaching Data Analytics" className="w-full h-full object-cover" />
             </div>
           </div>
 
@@ -160,7 +160,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-12">
             <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
-              <img src="/attached_assets/generated_images/data_analyst_at_work.png" alt="Data Analyst at Work" className="w-full h-full object-cover" />
+              <img src="../attached_assets/generated_images/data_analyst_at_work.png" alt="Data Analyst at Work" className="w-full h-full object-cover" />
             </div>
             <div>
               <h3 className="text-3xl font-bold mb-4">Your Path to Success</h3>
@@ -199,7 +199,7 @@ export default function Home() {
               </p>
             </div>
             <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
-              <img src="/attached_assets/generated_images/data_analytics_team_collaboration.png" alt="Data Analytics Team Collaboration" className="w-full h-full object-cover" />
+              <img src="../attached_assets/generated_images/data_analytics_team_collaboration.png" alt="Data Analytics Team Collaboration" className="w-full h-full object-cover" />
             </div>
           </div>
 
