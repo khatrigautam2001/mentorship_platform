@@ -345,52 +345,65 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async reorderRoadmapItem(itemId: string, newOrder: number): Promise<void> {
+  async reorderRoadmapItem(itemId: string, newPositionIndex: number): Promise<void> {
     const [item] = await db.select().from(roadmapItems).where(eq(roadmapItems.id, itemId));
     if (!item) throw new Error("Item not found");
     
-    // Get all items in the same skill
-    const allItems = await db.select().from(roadmapItems).where(eq(roadmapItems.skillId, item.skillId));
-    const oldOrder = item.order;
+    // Get all items in the same skill, ordered by current order
+    const allItems = await db.select().from(roadmapItems)
+      .where(eq(roadmapItems.skillId, item.skillId))
+      .orderBy(roadmapItems.order);
     
-    if (newOrder > oldOrder) {
-      // Moving down: shift items between oldOrder and newOrder
-      const itemsToUpdate = allItems.filter(i => i.order > oldOrder && i.order <= newOrder);
-      for (const i of itemsToUpdate) {
-        await db.update(roadmapItems).set({ order: i.order - 1 }).where(eq(roadmapItems.id, i.id));
-      }
-    } else if (newOrder < oldOrder) {
-      // Moving up: shift items between newOrder and oldOrder
-      const itemsToUpdate = allItems.filter(i => i.order >= newOrder && i.order < oldOrder);
-      for (const i of itemsToUpdate) {
-        await db.update(roadmapItems).set({ order: i.order + 1 }).where(eq(roadmapItems.id, i.id));
-      }
+    // Find the current position of the item being moved
+    const currentPositionIndex = allItems.findIndex(i => i.id === itemId);
+    if (currentPositionIndex === -1) throw new Error("Item not found in skill");
+    
+    // If moving to the same position, do nothing
+    if (currentPositionIndex === newPositionIndex) return;
+    
+    // Create new array without the dragged item
+    const itemsWithoutDragged = allItems.filter(i => i.id !== itemId);
+    
+    // Insert the dragged item at the new position
+    const movedItem = allItems[currentPositionIndex];
+    const reorderedItems = [
+      ...itemsWithoutDragged.slice(0, newPositionIndex),
+      movedItem,
+      ...itemsWithoutDragged.slice(newPositionIndex),
+    ];
+    
+    // Update all items with new order values (0, 1, 2, 3, ...)
+    for (let i = 0; i < reorderedItems.length; i++) {
+      await db.update(roadmapItems).set({ order: i }).where(eq(roadmapItems.id, reorderedItems[i].id));
     }
-    
-    // Set the new order for the item being moved
-    await db.update(roadmapItems).set({ order: newOrder }).where(eq(roadmapItems.id, itemId));
   }
 
-  async reorderSkill(skillId: string, newOrder: number): Promise<void> {
-    const [skill] = await db.select().from(skills).where(eq(skills.id, skillId));
-    if (!skill) throw new Error("Skill not found");
+  async reorderSkill(skillId: string, newPositionIndex: number): Promise<void> {
+    // Get all skills ordered by current order
+    const allSkills = await db.select().from(skills).orderBy(skills.order);
     
-    const allSkills = await db.select().from(skills);
-    const oldOrder = skill.order;
+    // Find the current position of the skill being moved
+    const currentPositionIndex = allSkills.findIndex(s => s.id === skillId);
+    if (currentPositionIndex === -1) throw new Error("Skill not found");
     
-    if (newOrder > oldOrder) {
-      const skillsToUpdate = allSkills.filter(s => s.order > oldOrder && s.order <= newOrder);
-      for (const s of skillsToUpdate) {
-        await db.update(skills).set({ order: s.order - 1 }).where(eq(skills.id, s.id));
-      }
-    } else if (newOrder < oldOrder) {
-      const skillsToUpdate = allSkills.filter(s => s.order >= newOrder && s.order < oldOrder);
-      for (const s of skillsToUpdate) {
-        await db.update(skills).set({ order: s.order + 1 }).where(eq(skills.id, s.id));
-      }
+    // If moving to the same position, do nothing
+    if (currentPositionIndex === newPositionIndex) return;
+    
+    // Create new array without the dragged skill
+    const skillsWithoutDragged = allSkills.filter(s => s.id !== skillId);
+    
+    // Insert the dragged skill at the new position
+    const movedSkill = allSkills[currentPositionIndex];
+    const reorderedSkills = [
+      ...skillsWithoutDragged.slice(0, newPositionIndex),
+      movedSkill,
+      ...skillsWithoutDragged.slice(newPositionIndex),
+    ];
+    
+    // Update all skills with new order values (0, 1, 2, 3, ...)
+    for (let i = 0; i < reorderedSkills.length; i++) {
+      await db.update(skills).set({ order: i }).where(eq(skills.id, reorderedSkills[i].id));
     }
-    
-    await db.update(skills).set({ order: newOrder }).where(eq(skills.id, skillId));
   }
 
   async reorderIndividualRoadmapItem(itemId: string, newOrder: number, menteeId: string): Promise<void> {
