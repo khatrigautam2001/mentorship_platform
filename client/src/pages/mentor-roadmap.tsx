@@ -248,14 +248,18 @@ export default function MentorRoadmap() {
   });
 
   const reorderSkillMutation = useMutation({
-    mutationFn: (data: { skillId: string; newOrder: number }) =>
-      apiRequest("PATCH", `/api/roadmap/skills/${data.skillId}/reorder`, { order: data.newOrder }),
+    mutationFn: (data: { skillId: string; newOrder: number }) => {
+      console.log(`Calling API to reorder skill ${data.skillId} to order ${data.newOrder}`);
+      return apiRequest("PATCH", `/api/roadmap/skills/${data.skillId}/reorder`, { order: data.newOrder });
+    },
     onSuccess: () => {
+      console.log("Skill reordered successfully");
       queryClient.invalidateQueries({ queryKey: ["/api/roadmap/global"] });
       setDraggedSkillId(null);
       setDragOverSkillId(null);
     },
     onError: (error: Error) => {
+      console.error("Failed to reorder skill:", error);
       toast({
         variant: "destructive",
         title: "Failed to reorder skill",
@@ -428,15 +432,24 @@ export default function MentorRoadmap() {
             <Card
               key={skill.id}
               draggable
-              onDragStart={() => setDraggedSkillId(skill.id)}
+              onDragStart={(e) => {
+                e.stopPropagation();
+                setDraggedSkillId(skill.id);
+              }}
               onDragOver={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setDragOverSkillId(skill.id);
               }}
-              onDragLeave={() => setDragOverSkillId(null)}
+              onDragLeave={(e) => {
+                e.stopPropagation();
+                setDragOverSkillId(null);
+              }}
               onDrop={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 if (draggedSkillId && draggedSkillId !== skill.id) {
+                  console.log(`Reordering skill ${draggedSkillId} to position ${skillIndex}`);
                   reorderSkillMutation.mutate({
                     skillId: draggedSkillId,
                     newOrder: skillIndex,
