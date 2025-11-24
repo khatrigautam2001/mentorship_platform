@@ -509,7 +509,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async reorderSkillForMentee(skillId: string, newOrder: number, menteeId: string): Promise<void> {
+  async reorderSkillForMentee(skillId: string, newPositionInCombinedList: number, menteeId: string): Promise<void> {
     // Check if this is an individual skill or a global skill
     const [potentialIndividualSkill] = await db.select().from(individualSkills).where(eq(individualSkills.id, skillId));
     
@@ -521,9 +521,9 @@ export class DatabaseStorage implements IStorage {
       
       const skillsWithoutDragged = allIndividualSkills.filter(s => s.id !== skillId);
       const reorderedSkills = [
-        ...skillsWithoutDragged.slice(0, newOrder),
+        ...skillsWithoutDragged.slice(0, newPositionInCombinedList),
         potentialIndividualSkill,
-        ...skillsWithoutDragged.slice(newOrder),
+        ...skillsWithoutDragged.slice(newPositionInCombinedList),
       ];
       
       // Update all skills with new order values
@@ -531,13 +531,47 @@ export class DatabaseStorage implements IStorage {
         await db.update(individualSkills).set({ order: i }).where(eq(individualSkills.id, reorderedSkills[i].id));
       }
     } else {
-      // It's a global skill being reordered - just set its order directly to where it should appear
-      // The newOrder is directly the position from the frontend combined list
-      const globalSkill = await storage.getSkillById(skillId);
-      if (!globalSkill) throw new Error("Global skill not found");
+      // It's a global skill being reordered in the combined list
+      // Get all global skills and individual skills for this mentee
+      const allGlobalSkills = await db.select().from(skills).orderBy(skills.order);
+      const allIndividualSkills = await db.select().from(individualSkills)
+        .where(eq(individualSkills.menteeId, menteeId))
+        .orderBy(individualSkills.order);
       
-      // Simply update the global skill's order to the newOrder value
-      await db.update(skills).set({ order: newOrder }).where(eq(skills.id, skillId));
+      // Build combined list like the frontend does
+      const combinedList = [...allGlobalSkills, ...allIndividualSkills] as any[];
+      combinedList.sort((a, b) => a.order - b.order);
+      
+      // Find the dragged skill in the combined list
+      const currentPositionInCombined = combinedList.findIndex(s => s.id === skillId);
+      if (currentPositionInCombined === -1) throw new Error("Global skill not found in combined list");
+      
+      // Remove it from its current position
+      const combinedWithoutDragged = combinedList.filter(s => s.id !== skillId);
+      
+      // Insert it at the new position
+      const draggedSkill = combinedList[currentPositionInCombined];
+      const reorderedCombined = [
+        ...combinedWithoutDragged.slice(0, newPositionInCombinedList),
+        draggedSkill,
+        ...combinedWithoutDragged.slice(newPositionInCombinedList),
+      ];
+      
+      // Now reassign order values: global skills get positions where they appear, individual skills too
+      let globalSkillOrderCounter = 0;
+      let individualSkillOrderCounter = 0;
+      
+      for (const skill of reorderedCombined) {
+        if (skill.menteeId === menteeId) {
+          // This is an individual skill
+          await db.update(individualSkills).set({ order: individualSkillOrderCounter }).where(eq(individualSkills.id, skill.id));
+          individualSkillOrderCounter++;
+        } else {
+          // This is a global skill
+          await db.update(skills).set({ order: globalSkillOrderCounter }).where(eq(skills.id, skill.id));
+          globalSkillOrderCounter++;
+        }
+      }
     }
   }
 }
