@@ -497,22 +497,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async reorderSkillForMentee(skillId: string, newOrder: number, menteeId: string): Promise<void> {
-    // Get all global and individual skills to work with the combined list
-    const globalSkills = await storage.getAllSkills();
-    const menteeIndividualSkills = await db.select().from(individualSkills)
-      .where(eq(individualSkills.menteeId, menteeId))
-      .orderBy(individualSkills.order);
-    
     // Check if this is an individual skill or a global skill
-    const individualSkill = menteeIndividualSkills.find(s => s.id === skillId);
-    const globalSkill = globalSkills.find(s => s.id === skillId);
+    const [potentialIndividualSkill] = await db.select().from(individualSkills).where(eq(individualSkills.id, skillId));
     
-    if (individualSkill) {
-      // It's an individual skill, reorder within individual skills only
-      const skillsWithoutDragged = menteeIndividualSkills.filter(s => s.id !== skillId);
+    if (potentialIndividualSkill && potentialIndividualSkill.menteeId === menteeId) {
+      // It's an individual skill, reorder it among individual skills only
+      const allIndividualSkills = await db.select().from(individualSkills)
+        .where(eq(individualSkills.menteeId, menteeId))
+        .orderBy(individualSkills.order);
+      
+      const skillsWithoutDragged = allIndividualSkills.filter(s => s.id !== skillId);
       const reorderedSkills = [
         ...skillsWithoutDragged.slice(0, newOrder),
-        individualSkill,
+        potentialIndividualSkill,
         ...skillsWithoutDragged.slice(newOrder),
       ];
       
@@ -520,64 +517,14 @@ export class DatabaseStorage implements IStorage {
       for (let i = 0; i < reorderedSkills.length; i++) {
         await db.update(individualSkills).set({ order: i }).where(eq(individualSkills.id, reorderedSkills[i].id));
       }
-    } else if (globalSkill) {
-      // It's a global skill - check if we already have individual items for this skill
-      const existingIndividualItems = await db.select().from(individualRoadmapItems)
-        .where(and(
-          eq(individualRoadmapItems.menteeId, menteeId),
-          eq(individualRoadmapItems.skillId, skillId)
-        ));
+    } else {
+      // It's a global skill being reordered - just set its order directly to where it should appear
+      // The newOrder is directly the position from the frontend combined list
+      const globalSkill = await storage.getSkillById(skillId);
+      if (!globalSkill) throw new Error("Global skill not found");
       
-      // Calculate how many global skills come before newOrder position
-      const globalSkillsBeforeNewOrder = globalSkills.slice(0, newOrder).length;
-      // Calculate how many individual skills should be before the new position
-      const individualSkillsBeforeNewOrder = newOrder - globalSkillsBeforeNewOrder;
-      
-      if (existingIndividualItems.length > 0) {
-        // We already have an individual skill wrapper - just reorder it
-        const wrapperSkill = menteeIndividualSkills.find(s => s.id === existingIndividualItems[0].individualSkillId);
-        if (wrapperSkill) {
-          const skillsWithoutDragged = menteeIndividualSkills.filter(s => s.id !== wrapperSkill.id);
-          const reorderedSkills = [
-            ...skillsWithoutDragged.slice(0, individualSkillsBeforeNewOrder),
-            wrapperSkill,
-            ...skillsWithoutDragged.slice(individualSkillsBeforeNewOrder),
-          ];
-          
-          for (let i = 0; i < reorderedSkills.length; i++) {
-            await db.update(individualSkills).set({ order: i }).where(eq(individualSkills.id, reorderedSkills[i].id));
-          }
-        }
-      } else {
-        // First time reordering this global skill - create an individual wrapper
-        // Create a new individual skill wrapper at the calculated position
-        const [newIndividualSkill] = await db.insert(individualSkills).values({
-          menteeId,
-          name: globalSkill.name,
-          description: globalSkill.description,
-          order: individualSkillsBeforeNewOrder,
-        }).returning();
-        
-        // Convert all global items of this skill to individual items
-        const globalItems = await storage.getRoadmapItemsBySkillId(skillId);
-        for (let i = 0; i < globalItems.length; i++) {
-          await db.insert(individualRoadmapItems).values({
-            menteeId,
-            skillId: skillId,
-            individualSkillId: newIndividualSkill.id,
-            title: globalItems[i].title,
-            resourceUrl: globalItems[i].resourceUrl,
-            isMockInterview: globalItems[i].isMockInterview,
-            order: i,
-          });
-        }
-        
-        // Update other individual skills' orders to shift them down
-        const otherSkills = menteeIndividualSkills.slice(individualSkillsBeforeNewOrder);
-        for (let i = 0; i < otherSkills.length; i++) {
-          await db.update(individualSkills).set({ order: individualSkillsBeforeNewOrder + 1 + i }).where(eq(individualSkills.id, otherSkills[i].id));
-        }
-      }
+      // Simply update the global skill's order to the newOrder value
+      await db.update(skills).set({ order: newOrder }).where(eq(skills.id, skillId));
     }
   }
 }
