@@ -31,7 +31,6 @@ export const roadmapItems = pgTable("roadmap_items", {
   skillId: varchar("skill_id").notNull().references(() => skills.id, { onDelete: 'cascade' }),
   title: text("title").notNull(),
   order: integer("order").notNull(),
-  isMockInterview: boolean("is_mock_interview").default(false).notNull(),
   resourceUrl: text("resource_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -85,7 +84,6 @@ export const individualRoadmapItems = pgTable("individual_roadmap_items", {
   individualSkillId: varchar("individual_skill_id").references(() => individualSkills.id, { onDelete: 'cascade' }),
   title: text("title").notNull(),
   order: integer("order").notNull(),
-  isMockInterview: boolean("is_mock_interview").default(false).notNull(),
   resourceUrl: text("resource_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

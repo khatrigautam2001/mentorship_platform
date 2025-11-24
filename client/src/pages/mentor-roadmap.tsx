@@ -32,7 +32,6 @@ interface SkillItem {
   title: string;
   resourceUrl: string;
   order: number;
-  isMockInterview: boolean;
 }
 
 export default function MentorRoadmap() {
@@ -49,8 +48,6 @@ export default function MentorRoadmap() {
   const [editSkillDescription, setEditSkillDescription] = useState("");
   const [editPartTitle, setEditPartTitle] = useState("");
   const [editPartResourceUrl, setEditPartResourceUrl] = useState("");
-  const [editPartIsMockInterview, setEditPartIsMockInterview] = useState(false);
-  const [newPartIsMockInterview, setNewPartIsMockInterview] = useState(false);
   const [deleteConfirmSkillId, setDeleteConfirmSkillId] = useState<string | null>(null);
   const [deleteConfirmItemId, setDeleteConfirmItemId] = useState<string | null>(null);
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
@@ -147,13 +144,12 @@ export default function MentorRoadmap() {
   });
 
   const addPartMutation = useMutation({
-    mutationFn: async (isMockInterview: boolean = false) => {
+    mutationFn: async () => {
       if (!selectedSkill) throw new Error("No skill selected");
       return apiRequest("POST", "/api/roadmap/items", {
         skillId: selectedSkill.id,
         title: newPartTitle,
         resourceUrl: newPartResourceUrl || null,
-        isMockInterview,
       });
     },
     onSuccess: () => {
@@ -210,7 +206,6 @@ export default function MentorRoadmap() {
       return apiRequest("PATCH", `/api/roadmap/items/${selectedPart.id}`, {
         title: editPartTitle,
         resourceUrl: editPartResourceUrl || null,
-        isMockInterview: editPartIsMockInterview,
       });
     },
     onSuccess: () => {
@@ -276,7 +271,7 @@ export default function MentorRoadmap() {
   });
 
   const addItemToForm = () => {
-    setSkillItems([...skillItems, { title: "", resourceUrl: "", order: skillItems.length, isMockInterview: false }]);
+    setSkillItems([...skillItems, { title: "", resourceUrl: "", order: skillItems.length }]);
   };
 
   const removeItemFromForm = (index: number) => {
@@ -285,11 +280,7 @@ export default function MentorRoadmap() {
 
   const updateItemInForm = (index: number, field: string, value: string | boolean) => {
     const updated = [...skillItems];
-    if (field === "isMockInterview") {
-      updated[index] = { ...updated[index], [field]: typeof value === "string" ? value === "true" : value };
-    } else {
-      updated[index] = { ...updated[index], [field]: value };
-    }
+    updated[index] = { ...updated[index], [field]: value };
     setSkillItems(updated);
   };
 
@@ -308,7 +299,6 @@ export default function MentorRoadmap() {
         title: item.title,
         resourceUrl: item.resourceUrl,
         order: idx,
-        isMockInterview: item.isMockInterview,
       })),
     });
   };
@@ -394,19 +384,6 @@ export default function MentorRoadmap() {
                             onChange={(e) => updateItemInForm(idx, "resourceUrl", e.target.value)}
                             data-testid={`input-part-resource-${idx}`}
                           />
-                          <div className="flex items-center gap-2 pt-1">
-                            <input
-                              type="checkbox"
-                              id={`mock-interview-${idx}`}
-                              checked={item.isMockInterview}
-                              onChange={(e) => updateItemInForm(idx, "isMockInterview", e.target.checked ? "true" : "false")}
-                              data-testid={`checkbox-mock-interview-${idx}`}
-                              className="h-4 w-4 rounded border-input"
-                            />
-                            <Label htmlFor={`mock-interview-${idx}`} className="text-sm font-medium cursor-pointer">
-                              This is a mock interview item
-                            </Label>
-                          </div>
                         </div>
                         <Button
                           type="button"
@@ -589,12 +566,6 @@ export default function MentorRoadmap() {
                               <span className="text-sm font-medium" data-testid={`text-item-${item.id}`}>
                                 {item.title}
                               </span>
-                              {item.isMockInterview && (
-                                <Badge variant="secondary" className="text-xs">
-                                  <Award className="h-3 w-3 mr-1" />
-                                  Mock Interview
-                                </Badge>
-                              )}
                               {item.resourceUrl && (
                                 <a href={item.resourceUrl} target="_blank" rel="noopener noreferrer">
                                   <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
@@ -609,7 +580,6 @@ export default function MentorRoadmap() {
                                   setSelectedPart(item);
                                   setEditPartTitle(item.title);
                                   setEditPartResourceUrl(item.resourceUrl || "");
-                                  setEditPartIsMockInterview(item.isMockInterview);
                                   setIsEditPartOpen(true);
                                 }}
                                 data-testid={`button-edit-item-${item.id}`}
@@ -686,19 +656,6 @@ export default function MentorRoadmap() {
                 data-testid="input-add-part-resource"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="part-mock-interview"
-                checked={newPartIsMockInterview}
-                onChange={(e) => setNewPartIsMockInterview(e.target.checked)}
-                data-testid="checkbox-add-part-mock-interview"
-                className="h-4 w-4 rounded border-input"
-              />
-              <Label htmlFor="part-mock-interview" className="text-sm font-medium cursor-pointer">
-                This is a mock interview item
-              </Label>
-            </div>
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
@@ -706,13 +663,12 @@ export default function MentorRoadmap() {
                   setIsAddPartOpen(false);
                   setNewPartTitle("");
                   setNewPartResourceUrl("");
-                  setNewPartIsMockInterview(false);
                 }}
               >
                 Cancel
               </Button>
               <Button
-                onClick={() => addPartMutation.mutate(newPartIsMockInterview)}
+                onClick={() => addPartMutation.mutate()}
                 disabled={!newPartTitle.trim() || addPartMutation.isPending}
                 data-testid="button-submit-add-part"
               >
@@ -803,19 +759,6 @@ export default function MentorRoadmap() {
                 data-testid="input-edit-part-resource"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="edit-part-mock-interview"
-                checked={editPartIsMockInterview}
-                onChange={(e) => setEditPartIsMockInterview(e.target.checked)}
-                data-testid="checkbox-edit-part-mock-interview"
-                className="h-4 w-4 rounded border-input"
-              />
-              <Label htmlFor="edit-part-mock-interview" className="text-sm font-medium cursor-pointer">
-                This is a mock interview item
-              </Label>
-            </div>
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
@@ -823,7 +766,6 @@ export default function MentorRoadmap() {
                   setIsEditPartOpen(false);
                   setEditPartTitle("");
                   setEditPartResourceUrl("");
-                  setEditPartIsMockInterview(false);
                   setSelectedPart(null);
                 }}
               >

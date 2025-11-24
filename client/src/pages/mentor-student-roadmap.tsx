@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, RotateCcw, ArrowLeft, Award, ExternalLink, GripVertical, Pencil } from "lucide-react";
+import { Plus, Trash2, RotateCcw, ArrowLeft, ExternalLink, GripVertical, Pencil } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +33,6 @@ interface IndividualSkillWithItems {
 const addSkillSchema = z.object({
   name: z.string().min(2, "Skill name must be at least 2 characters"),
   description: z.string().optional(),
-  isMockInterview: z.boolean().default(false),
 });
 
 type AddSkillFormData = z.infer<typeof addSkillSchema>;
@@ -65,7 +64,7 @@ export default function MentorStudentRoadmap() {
 
   const skillForm = useForm<AddSkillFormData>({
     resolver: zodResolver(addSkillSchema),
-    defaultValues: { name: "", description: "", isMockInterview: false },
+    defaultValues: { name: "", description: "" },
   });
 
   const { data: roadmap, isLoading, refetch } = useQuery<SkillWithItems[]>({
@@ -86,14 +85,13 @@ export default function MentorStudentRoadmap() {
       apiRequest("POST", `/api/roadmap/individual/${menteeId}/skills`, {
         name: data.name,
         description: data.description || null,
-        isMockInterview: data.isMockInterview,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}/skills`] });
       queryClient.invalidateQueries({ queryKey: [`/api/roadmap/individual/${menteeId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/mentee/learning"] });
       setIsAddSkillOpen(false);
-      skillForm.reset({ name: "", description: "", isMockInterview: false });
+      skillForm.reset({ name: "", description: "" });
       toast({
         title: "Skill added!",
         description: "New skill has been added to the roadmap",
@@ -509,12 +507,6 @@ export default function MentorStudentRoadmap() {
                               <span className="text-sm font-medium" data-testid={`text-item-${item.id}`}>
                                 {item.title}
                               </span>
-                              {item.isMockInterview && (
-                                <Badge variant="secondary" className="text-xs">
-                                  <Award className="h-3 w-3 mr-1" />
-                                  Mock Interview
-                                </Badge>
-                              )}
                               {item.resourceUrl && (
                                 <a href={item.resourceUrl} target="_blank" rel="noopener noreferrer">
                                   <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
@@ -602,19 +594,6 @@ export default function MentorStudentRoadmap() {
                 {...skillForm.register("description")}
                 data-testid="input-skill-description"
               />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isMockInterview"
-                {...skillForm.register("isMockInterview")}
-                data-testid="checkbox-skill-mock-interview"
-                className="h-4 w-4 rounded border-input"
-              />
-              <Label htmlFor="isMockInterview" className="text-sm font-medium cursor-pointer">
-                This is a mock interview item
-              </Label>
             </div>
 
             <Button

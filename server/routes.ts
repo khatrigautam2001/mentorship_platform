@@ -745,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requireMentor,
     async (req: Request, res: Response) => {
       try {
-        const { skillId, title, resourceUrl, isMockInterview } = req.body;
+        const { skillId, title, resourceUrl } = req.body;
 
         const existingItems = await storage.getRoadmapItemsBySkillId(skillId);
         const maxOrder =
@@ -757,7 +757,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           skillId,
           title,
           order: maxOrder + 1,
-          isMockInterview: isMockInterview || false,
           resourceUrl: resourceUrl || null,
         });
 
@@ -775,12 +774,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
-        const { title, resourceUrl, isMockInterview } = req.body;
+        const { title, resourceUrl } = req.body;
 
         const item = await storage.updateRoadmapItem(id, {
           title,
           resourceUrl: resourceUrl || null,
-          isMockInterview: isMockInterview !== undefined ? isMockInterview : undefined,
         });
 
         res.json(item);
@@ -845,9 +843,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const progressRecords = await storage.getProgressByMenteeId(
-          req.session.userId!,
-        );
-        const mockRequests = await storage.getMockInterviewRequestsByMenteeId(
           req.session.userId!,
         );
 
@@ -951,22 +946,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           nextUnlocked = allItems[0].id;
         }
 
-        // Mock interview statuses
-        const mockInterviewStatuses: Record<string, string> = {};
-        mockRequests.forEach((req) => {
-          if (req.status === "pending") {
-            mockInterviewStatuses[req.skillId] = "pending";
-          } else if (req.status === "approved") {
-            mockInterviewStatuses[req.skillId] = "completed";
-          }
-        });
-
         res.json({
           skills: skillsWithItems,
           progress: progressRecords,
           overallProgress,
           nextUnlocked,
-          mockInterviewStatuses,
         });
       } catch (error) {
         console.error("Get learning data error:", error);
@@ -1052,16 +1036,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Item not found" });
         }
 
-        // Prevent completing mock interview items directly - they need approval
-        if (currentItem.isMockInterview) {
-          return res
-            .status(400)
-            .json({
-              message:
-                "Mock interview items require mentor approval. Please request approval instead.",
-            });
-        }
-
         // Get current progress
         const existingProgress = await storage.getProgressByMenteeId(
           req.session.userId!,
@@ -1106,38 +1080,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Complete item error:", error);
         res.status(500).json({ message: "Failed to complete item" });
-      }
-    },
-  );
-
-  app.post(
-    "/api/mentee/request-mock-interview/:skillId",
-    requireMentee,
-    async (req: Request, res: Response) => {
-      try {
-        const { skillId } = req.params;
-
-        // Check if there's already a pending request
-        const existingRequests =
-          await storage.getMockInterviewRequestsByMenteeId(req.session.userId!);
-        const pendingRequest = existingRequests.find(
-          (r) => r.skillId === skillId && r.status === "pending",
-        );
-
-        if (pendingRequest) {
-          return res.status(400).json({ message: "Request already pending" });
-        }
-
-        const request = await storage.createMockInterviewRequest({
-          menteeId: req.session.userId!,
-          skillId,
-          status: "pending",
-        });
-
-        res.json(request);
-      } catch (error) {
-        console.error("Request mock interview error:", error);
-        res.status(500).json({ message: "Failed to request mock interview" });
       }
     },
   );
@@ -1456,7 +1398,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           individualSkillId,
           title,
           order,
-          isMockInterview,
           resourceUrl,
         } = req.body;
 
@@ -1473,7 +1414,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           skillId: skillId || null,
           title,
           order: order !== undefined ? order : 0,
-          isMockInterview: isMockInterview || false,
           individualSkillId: individualSkillId || null,
           resourceUrl: resourceUrl || null,
         });
