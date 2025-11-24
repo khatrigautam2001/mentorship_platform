@@ -11,7 +11,7 @@ import type { User } from "@shared/schema";
 
 import Home from "@/pages/home";
 import Login from "@/pages/login";
-import Register from "@/pages/register";
+import Register from "@/pages/register";  
 import MentorOverview from "@/pages/mentor-overview";
 import MentorStudents from "@/pages/mentor-students";
 import MentorStudentRoadmap from "@/pages/mentor-student-roadmap";
