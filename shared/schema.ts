@@ -134,11 +134,15 @@ export const progressRelations = relations(progress, ({ one }) => ({
 export const mockInterviewRequestsRelations = relations(mockInterviewRequests, ({ one }) => ({
   mentee: one(users, {
     fields: [mockInterviewRequests.menteeId],
-    references: [mockInterviewRequests.id],
+    references: [users.id],
   }),
   skill: one(skills, {
     fields: [mockInterviewRequests.skillId],
     references: [skills.id],
+  }),
+  individualSkill: one(individualSkills, {
+    fields: [mockInterviewRequests.individualSkillId],
+    references: [individualSkills.id],
   }),
 }));
 
