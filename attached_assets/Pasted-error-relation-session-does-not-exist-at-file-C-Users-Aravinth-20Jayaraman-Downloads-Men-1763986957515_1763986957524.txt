@@ -1,0 +1,24 @@
+error: relation "session" does not exist
+    at file:///C:/Users/Aravinth%20Jayaraman/Downloads/MentorTrackPlatform%20(1)/MentorTrackPlatform/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PGStore._asyncQuery (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform (1)\MentorTrackPlatform\node_modules\connect-pg-simple\index.js:322:21)
+error: relation "session" does not exist
+    at file:///C:/Users/Aravinth%20Jayaraman/Downloads/MentorTrackPlatform%20(1)/MentorTrackPlatform/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PGStore._asyncQuery (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform (1)\MentorTrackPlatform\node_modules\connect-pg-simple\index.js:322:21)
+error: relation "session" does not exist
+    at file:///C:/Users/Aravinth%20Jayaraman/Downloads/MentorTrackPlatform%20(1)/MentorTrackPlatform/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PGStore._asyncQuery (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform (1)\MentorTrackPlatform\node_modules\connect-pg-simple\index.js:322:21)
+error: relation "session" does not exist
+    at file:///C:/Users/Aravinth%20Jayaraman/Downloads/MentorTrackPlatform%20(1)/MentorTrackPlatform/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PGStore._asyncQuery (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform (1)\MentorTrackPlatform\node_modules\connect-pg-simple\index.js:322:21)
+error: relation "session" does not exist
+    at file:///C:/Users/Aravinth%20Jayaraman/Downloads/MentorTrackPlatform%20(1)/MentorTrackPlatform/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PGStore._asyncQuery (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform (1)\MentorTrackPlatform\node_modules\connect-pg-simple\index.js:322:21)
+error: relation "session" does not exist
+    at file:///C:/Users/Aravinth%20Jayaraman/Downloads/MentorTrackPlatform%20(1)/MentorTrackPlatform/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PGStore._asyncQuery (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform (1)\MentorTrackPlatform\node_modules\connect-pg-simple\index.js:322:21)
