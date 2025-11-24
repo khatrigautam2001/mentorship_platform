@@ -930,13 +930,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? Math.round((completedCount / allItems.length) * 100)
             : 0;
 
+        // Mock interview statuses
+        const mockInterviewStatuses: Record<string, string> = {};
+        mockRequests.forEach((req) => {
+          if (req.status === "pending") {
+            mockInterviewStatuses[req.skillId] = "pending";
+          } else if (req.status === "approved") {
+            mockInterviewStatuses[req.skillId] = "completed";
+          }
+        });
+
         // Find next unlocked item - the first uncompleted item in order
         let nextUnlocked: string | null = null;
         for (const skill of skillsWithItems) {
           for (const item of skill.items) {
-            const isCompleted = progressRecords.some(
+            let isCompleted = progressRecords.some(
               (p) => p.itemId === item.id && p.completed,
             );
+            // Also check if this is a mock interview item that has been approved
+            if (!isCompleted && item.isMockInterview && mockInterviewStatuses[skill.id] === "completed") {
+              isCompleted = true;
+            }
             if (!isCompleted) {
               nextUnlocked = item.id;
               break;
@@ -949,16 +963,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!nextUnlocked && allItems.length > 0) {
           nextUnlocked = allItems[0].id;
         }
-
-        // Mock interview statuses
-        const mockInterviewStatuses: Record<string, string> = {};
-        mockRequests.forEach((req) => {
-          if (req.status === "pending") {
-            mockInterviewStatuses[req.skillId] = "pending";
-          } else if (req.status === "approved") {
-            mockInterviewStatuses[req.skillId] = "completed";
-          }
-        });
 
         res.json({
           skills: skillsWithItems,
