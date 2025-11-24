@@ -224,9 +224,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
             }
 
-            // Sort items within each skill by order
+            // Sort items within each skill by order - handle undefined values
             skillsWithItems.forEach((skill) => {
-              skill.items.sort((a, b) => a.order - b.order);
+              skill.items.sort((a, b) => {
+                const orderA = a.order ?? 999999;
+                const orderB = b.order ?? 999999;
+                return orderA - orderB;
+              });
             });
 
             // Calculate progress
@@ -907,9 +911,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           skillsWithItems.sort((a, b) => a.order - b.order);
         }
 
-        // Sort items within each skill by order
+        // Sort items within each skill by order - handle undefined values
         skillsWithItems.forEach((skill) => {
-          skill.items.sort((a, b) => a.order - b.order);
+          skill.items.sort((a, b) => {
+            const orderA = a.order ?? 999999;
+            const orderB = b.order ?? 999999;
+            return orderA - orderB;
+          });
         });
 
         // Calculate overall progress
@@ -922,7 +930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? Math.round((completedCount / allItems.length) * 100)
             : 0;
 
-        // Find next unlocked item - the first uncompleted item
+        // Find next unlocked item - the first uncompleted item in order
         let nextUnlocked: string | null = null;
         for (const skill of skillsWithItems) {
           for (const item of skill.items) {
@@ -937,7 +945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (nextUnlocked) break;
         }
 
-        // If nothing is unlocked yet, unlock the first item
+        // If nothing is unlocked yet (no progress), unlock the first item
         if (!nextUnlocked && allItems.length > 0) {
           nextUnlocked = allItems[0].id;
         }
