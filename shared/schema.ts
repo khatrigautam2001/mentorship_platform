@@ -169,6 +169,18 @@ export const individualRoadmapItemsRelations = relations(individualRoadmapItems,
     fields: [individualRoadmapItems.skillId],
     references: [skills.id],
   }),
+  individualSkill: one(individualSkills, {
+    fields: [individualRoadmapItems.individualSkillId],
+    references: [individualSkills.id],
+  }),
+}));
+
+export const individualSkillsRelations = relations(individualSkills, ({ many, one }) => ({
+  mentee: one(users, {
+    fields: [individualSkills.menteeId],
+    references: [users.id],
+  }),
+  roadmapItems: many(individualRoadmapItems),
 }));
 
 export const insertUserSchema = createInsertSchema(users).omit({
