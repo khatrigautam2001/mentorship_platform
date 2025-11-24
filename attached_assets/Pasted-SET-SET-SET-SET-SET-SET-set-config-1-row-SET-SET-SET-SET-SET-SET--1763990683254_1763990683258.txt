@@ -1,0 +1,92 @@
+SET
+SET
+SET
+SET
+SET
+SET
+ set_config
+------------
+
+(1 row)
+
+SET
+SET
+SET
+SET
+SET
+SET
+ERROR:  relation "badges" already exists
+ALTER TABLE
+ERROR:  relation "individual_roadmap_items" already exists
+ALTER TABLE
+ERROR:  relation "individual_skills" already exists
+ALTER TABLE
+ERROR:  relation "mock_interview_requests" already exists
+ALTER TABLE
+ERROR:  relation "payments" already exists
+ALTER TABLE
+ERROR:  relation "progress" already exists
+ALTER TABLE
+ERROR:  relation "roadmap_items" already exists
+ALTER TABLE
+ERROR:  relation "session" already exists
+ALTER TABLE
+ERROR:  relation "skills" already exists
+ALTER TABLE
+ERROR:  relation "users" already exists
+ALTER TABLE
+ERROR:  duplicate key value violates unique constraint "badges_pkey"
+DETAIL:  Key (id)=(ee6610ec-06f9-4af7-8a18-e290601d85fa) already exists.
+CONTEXT:  COPY badges, line 1
+ERROR:  duplicate key value violates unique constraint "individual_roadmap_items_pkey"
+DETAIL:  Key (id)=(360eb81a-d2da-4c3e-b3dc-d487b38ad404) already exists.
+CONTEXT:  COPY individual_roadmap_items, line 1
+ERROR:  duplicate key value violates unique constraint "individual_skills_pkey"
+DETAIL:  Key (id)=(4a6ea336-2a8c-4fab-8df6-fc39445d85c2) already exists.
+CONTEXT:  COPY individual_skills, line 1
+ERROR:  duplicate key value violates unique constraint "mock_interview_requests_pkey"
+DETAIL:  Key (id)=(8d73f097-0139-4f0c-9a2a-c7d286d0d005) already exists.
+CONTEXT:  COPY mock_interview_requests, line 1
+ERROR:  duplicate key value violates unique constraint "payments_pkey"
+DETAIL:  Key (id)=(d110b576-c652-40b6-bc9f-6b68bf09d733) already exists.
+CONTEXT:  COPY payments, line 1
+ERROR:  duplicate key value violates unique constraint "progress_pkey"
+DETAIL:  Key (id)=(6eaf6c5c-4645-478b-b37a-b7a150acddff) already exists.
+CONTEXT:  COPY progress, line 1
+ERROR:  duplicate key value violates unique constraint "roadmap_items_pkey"
+DETAIL:  Key (id)=(sql-8) already exists.
+CONTEXT:  COPY roadmap_items, line 1
+COPY 0
+ERROR:  duplicate key value violates unique constraint "skills_pkey"
+DETAIL:  Key (id)=(c8a72ed1-2287-4448-8cf5-737ee62f239e) already exists.
+CONTEXT:  COPY skills, line 1
+ERROR:  duplicate key value violates unique constraint "users_email_unique"
+DETAIL:  Key (email)=(mentor@test.com) already exists.
+CONTEXT:  COPY users, line 1
+ERROR:  multiple primary keys for table "badges" are not allowed
+ERROR:  multiple primary keys for table "individual_roadmap_items" are not allowed
+ERROR:  multiple primary keys for table "individual_skills" are not allowed
+ERROR:  multiple primary keys for table "mock_interview_requests" are not allowed
+ERROR:  multiple primary keys for table "payments" are not allowed
+ERROR:  multiple primary keys for table "progress" are not allowed
+ERROR:  multiple primary keys for table "roadmap_items" are not allowed
+ERROR:  multiple primary keys for table "session" are not allowed
+ERROR:  multiple primary keys for table "skills" are not allowed
+ERROR:  relation "users_email_unique" already exists
+ERROR:  multiple primary keys for table "users" are not allowed
+ERROR:  relation "IDX_session_expire" already exists
+ERROR:  constraint "badges_mentee_id_users_id_fk" for relation "badges" already exists
+ERROR:  constraint "badges_skill_id_skills_id_fk" for relation "badges" already exists
+ERROR:  constraint "individual_roadmap_items_individual_skill_id_individual_skills_" for relation "individual_roadmap_items" already exists
+ERROR:  constraint "individual_roadmap_items_mentee_id_users_id_fk" for relation "individual_roadmap_items" already exists
+ERROR:  constraint "individual_roadmap_items_skill_id_skills_id_fk" for relation "individual_roadmap_items" already exists
+ERROR:  constraint "individual_skills_mentee_id_users_id_fk" for relation "individual_skills" already exists
+ERROR:  constraint "mock_interview_requests_mentee_id_users_id_fk" for relation "mock_interview_requests" already exists
+ERROR:  constraint "mock_interview_requests_skill_id_skills_id_fk" for relation "mock_interview_requests" already exists
+ERROR:  constraint "payments_mentee_id_users_id_fk" for relation "payments" already exists
+ERROR:  constraint "progress_mentee_id_users_id_fk" for relation "progress" already exists
+ERROR:  constraint "roadmap_items_skill_id_skills_id_fk" for relation "roadmap_items" already exists
+ERROR:  constraint "users_mentor_id_users_id_fk" for relation "users" already exists
+ERROR:  permission denied to change default privileges
+ERROR:  permission denied to change default privileges
+PS C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform (1)\MentorTrackPlatform>
