@@ -933,10 +933,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Mock interview statuses
         const mockInterviewStatuses: Record<string, string> = {};
         mockRequests.forEach((req) => {
-          if (req.status === "pending") {
-            mockInterviewStatuses[req.skillId] = "pending";
-          } else if (req.status === "approved") {
-            mockInterviewStatuses[req.skillId] = "completed";
+          const key = req.skillId || req.individualSkillId;
+          if (key) {
+            if (req.status === "pending") {
+              mockInterviewStatuses[key] = "pending";
+            } else if (req.status === "approved") {
+              mockInterviewStatuses[key] = "completed";
+            }
           }
         });
 
@@ -1076,10 +1079,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         const mockInterviewStatuses: Record<string, string> = {};
         mockRequests.forEach((req) => {
-          if (req.status === "pending") {
-            mockInterviewStatuses[req.skillId] = "pending";
-          } else if (req.status === "approved") {
-            mockInterviewStatuses[req.skillId] = "completed";
+          const key = req.skillId || req.individualSkillId;
+          if (key) {
+            if (req.status === "pending") {
+              mockInterviewStatuses[key] = "pending";
+            } else if (req.status === "approved") {
+              mockInterviewStatuses[key] = "completed";
+            }
           }
         });
 
@@ -1147,11 +1153,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { skillId } = req.params;
 
-        // Check if there's already a pending request
+        // Check if it's a global skill or individual skill
+        const globalSkill = await storage.getSkill(skillId);
+        let globalSkillId: string | null = null;
+        let individualSkillId: string | null = null;
+
+        if (globalSkill) {
+          globalSkillId = skillId;
+        } else {
+          // It might be an individual skill ID
+          individualSkillId = skillId;
+        }
+
+        // Check if there's already a pending request for this skill
         const existingRequests =
           await storage.getMockInterviewRequestsByMenteeId(req.session.userId!);
         const pendingRequest = existingRequests.find(
-          (r) => r.skillId === skillId && r.status === "pending",
+          (r) => (globalSkillId && r.skillId === globalSkillId && r.status === "pending") ||
+                 (individualSkillId && r.individualSkillId === individualSkillId && r.status === "pending"),
         );
 
         if (pendingRequest) {
@@ -1160,7 +1179,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const request = await storage.createMockInterviewRequest({
           menteeId: req.session.userId!,
-          skillId,
+          skillId: globalSkillId || null,
+          individualSkillId: individualSkillId || null,
           status: "pending",
         });
 

@@ -47,7 +47,8 @@ export const progress = pgTable("progress", {
 export const mockInterviewRequests = pgTable("mock_interview_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   menteeId: varchar("mentee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  skillId: varchar("skill_id").notNull().references(() => skills.id, { onDelete: 'cascade' }),
+  skillId: varchar("skill_id").references(() => skills.id, { onDelete: 'cascade' }),
+  individualSkillId: varchar("individual_skill_id").references(() => individualSkills.id, { onDelete: 'cascade' }),
   status: text("status").notNull(),
   requestedAt: timestamp("requested_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
