@@ -535,19 +535,16 @@ export class DatabaseStorage implements IStorage {
       ...combinedWithoutDragged.slice(newPositionInCombinedList),
     ];
     
-    // Now reassign order values: global skills get positions where they appear, individual skills too
-    let globalSkillOrderCounter = 0;
-    let individualSkillOrderCounter = 0;
-    
-    for (const skill of reorderedCombined) {
+    // Reassign order values based on position in reordered combined list
+    // All skills (global and individual) get unique order values based on their position
+    for (let i = 0; i < reorderedCombined.length; i++) {
+      const skill = reorderedCombined[i];
       if (skill.menteeId === menteeId) {
         // This is an individual skill
-        await db.update(individualSkills).set({ order: individualSkillOrderCounter }).where(eq(individualSkills.id, skill.id));
-        individualSkillOrderCounter++;
+        await db.update(individualSkills).set({ order: i }).where(eq(individualSkills.id, skill.id));
       } else {
         // This is a global skill
-        await db.update(skills).set({ order: globalSkillOrderCounter }).where(eq(skills.id, skill.id));
-        globalSkillOrderCounter++;
+        await db.update(skills).set({ order: i }).where(eq(skills.id, skill.id));
       }
     }
   }
