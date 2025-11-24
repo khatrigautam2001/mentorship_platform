@@ -322,12 +322,40 @@
         res.status(500).json({ message: "Failed to get mock requests" });
       }
     });
+
+    app.get("/api/mentor/mock-requests/all", requireMentor, async (req: Request, res: Response) => {
+      try {
+        const requests = await storage.getMockInterviewRequestsByMentorId(req.session.userId!);
+        const mentees = await storage.getMenteesByMentorId(req.session.userId!);
+        const allSkills = await storage.getAllSkills();
+  
+        const requestsWithDetails = requests
+          .filter(r => r.status !== "pending")
+          .map(request => {
+            const mentee = mentees.find(m => m.id === request.menteeId);
+            const skill = allSkills.find(s => s.id === request.skillId);
+  
+            return {
+              ...request,
+              menteeName: mentee?.name || "Unknown",
+              menteePhoto: mentee?.photo || null,
+              skillName: skill?.name || "Unknown",
+            };
+          });
+  
+        res.json(requestsWithDetails);
+      } catch (error) {
+        console.error("Get all mock requests error:", error);
+        res.status(500).json({ message: "Failed to get mock requests" });
+      }
+    });
   
     app.post("/api/mentor/mock-requests/:id/approve", requireMentor, async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
         const request = await storage.updateMockInterviewRequest(id, {
           status: "approved",
+          resolvedAt: new Date(),
         });
   
         if (!request) {
@@ -387,6 +415,7 @@
         const { id } = req.params;
         const request = await storage.updateMockInterviewRequest(id, {
           status: "rejected",
+          resolvedAt: new Date(),
         });
   
         if (!request) {

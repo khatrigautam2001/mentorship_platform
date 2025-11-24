@@ -15,6 +15,7 @@ import MentorOverview from "@/pages/mentor-overview";
 import MentorStudents from "@/pages/mentor-students";
 import MentorStudentRoadmap from "@/pages/mentor-student-roadmap";
 import MentorRequests from "@/pages/mentor-requests";
+import MentorAllRequests from "@/pages/mentor-all-requests";
 import MentorPayments from "@/pages/mentor-payments";
 import MentorRoadmap from "@/pages/mentor-roadmap";
 import MentorProfile from "@/pages/mentor-profile";
@@ -125,6 +126,12 @@ function Router() {
       <Route path="/mentor/requests">
         <DashboardLayout>
           <ProtectedRoute component={MentorRequests} requiredRole="mentor" />
+        </DashboardLayout>
+      </Route>
+
+      <Route path="/mentor/all-requests">
+        <DashboardLayout>
+          <ProtectedRoute component={MentorAllRequests} requiredRole="mentor" />
         </DashboardLayout>
       </Route>
       

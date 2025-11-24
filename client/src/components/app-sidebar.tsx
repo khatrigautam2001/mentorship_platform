@@ -22,6 +22,7 @@ const mentorMenuItems = [
   { title: "Overview", url: "/mentor/overview", icon: LayoutDashboard },
   { title: "All Students", url: "/mentor/students", icon: Users },
   { title: "Pending Requests", url: "/mentor/requests", icon: Clock },
+  { title: "All Requests", url: "/mentor/all-requests", icon: Clock },
   { title: "Global Roadmap", url: "/mentor/roadmap", icon: Map },
   { title: "Payments", url: "/mentor/payments", icon: DollarSign },
 ];
