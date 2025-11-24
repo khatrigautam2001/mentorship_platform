@@ -114,7 +114,7 @@ export default function Home() {
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </div>
-            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+            <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
               <img src={dashboardImg} alt="Data Analytics Dashboard" className="w-full h-full object-cover" />
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function Home() {
                 Most aspiring analysts hit these frustrating roadblocks. Tutorials don't cover real-world scenarios. You're not alone in feeling stuck.
               </p>
             </div>
-            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+            <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
               <img src={mentorImg} alt="Mentor Teaching Data Analytics" className="w-full h-full object-cover" />
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function Home() {
       <section className="py-20 bg-muted/50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-12">
-            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+            <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
               <img src={analystImg} alt="Data Analyst at Work" className="w-full h-full object-cover" />
             </div>
             <div>
@@ -202,7 +202,7 @@ export default function Home() {
                 Real, measurable results in your data analytics journey.
               </p>
             </div>
-            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+            <div className="rounded-lg overflow-hidden shadow-lg w-full h-full min-h-[300px] sm:min-h-[400px]">
               <img src={teamImg} alt="Data Analytics Team Collaboration" className="w-full h-full object-cover" />
             </div>
           </div>
