@@ -180,17 +180,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             let skillsWithItems;
             if (hasIndividualCustomization) {
-              // Use individual customized roadmap - include both global and individual skills
-              const globalSkillsWithItems = await Promise.all(
+              // Use individual customized roadmap - match mentee logic exactly
+              skillsWithItems = await Promise.all(
                 allSkills.map(async (skill) => {
-                  const items = individualItems.filter(
+                  // Get both global and individual items for this skill
+                  const globalItems = await storage.getRoadmapItemsBySkillId(
+                    skill.id,
+                  );
+                  const customIndividualItems = individualItems.filter(
                     (item) => item.skillId === skill.id,
                   );
+                  // Use individual items if they exist (customization), otherwise use global items
+                  const items =
+                    customIndividualItems.length > 0
+                      ? customIndividualItems
+                      : globalItems;
                   return { ...skill, items };
                 }),
               );
 
-              // Add individual skills with their items
+              // Add custom individual skills
               const individualSkillsWithItems = await Promise.all(
                 individualSkills.map(async (skill) => {
                   const items = individualItems.filter(
@@ -200,11 +209,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }),
               );
 
-              // Only include skills that have items in the customization
-              skillsWithItems = [
-                ...globalSkillsWithItems.filter((s) => s.items.length > 0),
-                ...individualSkillsWithItems.filter((s) => s.items.length > 0),
-              ];
+              skillsWithItems = [...skillsWithItems, ...individualSkillsWithItems];
+              // Sort all skills by order
+              skillsWithItems.sort((a, b) => a.order - b.order);
             } else {
               // Use global roadmap
               skillsWithItems = await Promise.all(
