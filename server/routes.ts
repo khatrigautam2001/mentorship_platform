@@ -708,13 +708,20 @@
       try {
         const { itemId } = req.params;
         
-        // Get all skills and items to verify sequential order
+        // Get all skills and items to verify sequential order (both global and individual for this mentee)
         const skills = await storage.getAllSkills();
         const allItems: any[] = [];
         for (const skill of skills) {
           const items = await storage.getRoadmapItemsBySkillId(skill.id);
           allItems.push(...items);
         }
+        
+        // Also get individual items for this mentee
+        const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(req.session.userId!);
+        allItems.push(...individualItems);
+        
+        // Sort all items by order to maintain sequence
+        allItems.sort((a, b) => a.order - b.order);
   
         // Find the item being completed
         const currentItem = allItems.find(item => item.id === itemId);
@@ -730,7 +737,7 @@
         // Get current progress
         const existingProgress = await storage.getProgressByMenteeId(req.session.userId!);
   
-        // Find the index of the current item in the global sequence
+        // Find the index of the current item in the sequence
         const currentIndex = allItems.findIndex(item => item.id === itemId);
         
         // Verify that all previous items are complete
