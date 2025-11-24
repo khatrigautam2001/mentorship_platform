@@ -181,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             let skillsWithItems;
             if (hasIndividualCustomization) {
               // Use individual customized roadmap - include both global and individual skills
-              skillsWithItems = await Promise.all(
+              const globalSkillsWithItems = await Promise.all(
                 allSkills.map(async (skill) => {
                   const items = individualItems.filter(
                     (item) => item.skillId === skill.id,
@@ -200,7 +200,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }),
               );
 
-              skillsWithItems = [...skillsWithItems, ...individualSkillsWithItems];
+              // Only include skills that have items in the customization
+              skillsWithItems = [
+                ...globalSkillsWithItems.filter((s) => s.items.length > 0),
+                ...individualSkillsWithItems.filter((s) => s.items.length > 0),
+              ];
             } else {
               // Use global roadmap
               skillsWithItems = await Promise.all(
