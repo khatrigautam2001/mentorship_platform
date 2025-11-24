@@ -937,6 +937,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mockRequests.forEach((req) => {
           if (req.status === "pending") {
             mockInterviewStatuses[req.skillId] = "pending";
+          } else if (req.status === "approved") {
+            mockInterviewStatuses[req.skillId] = "completed";
           }
         });
 
