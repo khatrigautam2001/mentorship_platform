@@ -1070,6 +1070,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.session.userId!,
         );
 
+        // Get mock interview statuses for this mentee
+        const mockRequests = await storage.getMockInterviewRequestsByMenteeId(
+          req.session.userId!,
+        );
+        const mockInterviewStatuses: Record<string, string> = {};
+        mockRequests.forEach((req) => {
+          if (req.status === "pending") {
+            mockInterviewStatuses[req.skillId] = "pending";
+          } else if (req.status === "approved") {
+            mockInterviewStatuses[req.skillId] = "completed";
+          }
+        });
+
         // Find the index of the current item in the sequence
         const currentIndex = allItems.findIndex((item) => item.id === itemId);
 
@@ -1080,7 +1093,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             (p) => p.itemId === previousItem.id,
           );
 
-          if (!previousProgress || !previousProgress.completed) {
+          // Check if previous item is completed either through progress or approved mock interview
+          let isPreviousCompleted = previousProgress && previousProgress.completed;
+          
+          // Also check if this is a mock interview item that has been approved
+          if (!isPreviousCompleted && previousItem.isMockInterview) {
+            // Find which skill this item belongs to
+            const skillForItem = skillsWithItems.find((skill) =>
+              skill.items.some((item) => item.id === previousItem.id)
+            );
+            if (skillForItem && mockInterviewStatuses[skillForItem.id] === "completed") {
+              isPreviousCompleted = true;
+            }
+          }
+
+          if (!isPreviousCompleted) {
             return res.status(400).json({
               message:
                 "You must complete previous items in sequence before completing this one",
