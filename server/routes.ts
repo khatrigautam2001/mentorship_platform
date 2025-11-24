@@ -1490,7 +1490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: Request, res: Response) => {
       try {
         const { menteeId, itemId } = req.params;
-        const { title, resourceUrl } = req.body;
+        const { title, resourceUrl, isMockInterview } = req.body;
 
         // Verify mentee belongs to this mentor
         const mentee = await storage.getUser(menteeId);
@@ -1503,6 +1503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const item = await storage.updateIndividualRoadmapItem(itemId, {
           title,
           resourceUrl: resourceUrl || null,
+          isMockInterview: isMockInterview !== undefined ? isMockInterview : undefined,
         });
 
         res.json(item);

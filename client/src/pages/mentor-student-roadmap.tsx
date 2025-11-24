@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, RotateCcw, ArrowLeft, Award, ExternalLink, GripVertical, Pencil } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -60,6 +61,8 @@ export default function MentorStudentRoadmap() {
   const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
   const [draggedSkillId, setDraggedSkillId] = useState<string | null>(null);
   const [dragOverSkillId, setDragOverSkillId] = useState<string | null>(null);
+  const [newPartIsMockInterview, setNewPartIsMockInterview] = useState(false);
+  const [editItemIsMockInterview, setEditItemIsMockInterview] = useState(false);
   const { toast } = useToast();
 
   const skillForm = useForm<AddSkillFormData>({
@@ -169,6 +172,7 @@ export default function MentorStudentRoadmap() {
         title: newPartTitle,
         resourceUrl: newPartResourceUrl || null,
         order: nextOrder,
+        isMockInterview: newPartIsMockInterview,
       });
     },
     onSuccess: () => {
@@ -178,6 +182,7 @@ export default function MentorStudentRoadmap() {
       setIsAddItemOpen(false);
       setNewPartTitle("");
       setNewPartResourceUrl("");
+      setNewPartIsMockInterview(false);
       setSelectedSkill(null);
       toast({
         title: "Part added!",
@@ -199,6 +204,7 @@ export default function MentorStudentRoadmap() {
       return apiRequest("PATCH", `/api/roadmap/individual/${menteeId}/items/${selectedItem.id}`, {
         title: editItemTitle,
         resourceUrl: editItemResourceUrl || null,
+        isMockInterview: editItemIsMockInterview,
       });
     },
     onSuccess: () => {
@@ -207,6 +213,7 @@ export default function MentorStudentRoadmap() {
       setIsEditItemOpen(false);
       setEditItemTitle("");
       setEditItemResourceUrl("");
+      setEditItemIsMockInterview(false);
       setSelectedItem(null);
       toast({
         title: "Part updated!",
@@ -527,6 +534,7 @@ export default function MentorStudentRoadmap() {
                                   setSelectedItem(item);
                                   setEditItemTitle(item.title);
                                   setEditItemResourceUrl(item.resourceUrl || "");
+                                  setEditItemIsMockInterview(item.isMockInterview || false);
                                   setIsEditItemOpen(true);
                                 }}
                                 data-testid={`button-edit-item-${item.id}`}
@@ -696,6 +704,17 @@ export default function MentorStudentRoadmap() {
                 data-testid="input-add-part-resource"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="part-is-mock-interview"
+                checked={newPartIsMockInterview}
+                onCheckedChange={(checked) => setNewPartIsMockInterview(checked as boolean)}
+                data-testid="checkbox-add-part-mock-interview"
+              />
+              <Label htmlFor="part-is-mock-interview" className="font-normal cursor-pointer">
+                This is a mock interview item
+              </Label>
+            </div>
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
@@ -703,6 +722,7 @@ export default function MentorStudentRoadmap() {
                   setIsAddItemOpen(false);
                   setNewPartTitle("");
                   setNewPartResourceUrl("");
+                  setNewPartIsMockInterview(false);
                   setSelectedSkill(null);
                 }}
               >
@@ -749,6 +769,17 @@ export default function MentorStudentRoadmap() {
                 data-testid="input-edit-item-resource"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="edit-item-is-mock-interview"
+                checked={editItemIsMockInterview}
+                onCheckedChange={(checked) => setEditItemIsMockInterview(checked as boolean)}
+                data-testid="checkbox-edit-item-mock-interview"
+              />
+              <Label htmlFor="edit-item-is-mock-interview" className="font-normal cursor-pointer">
+                This is a mock interview item
+              </Label>
+            </div>
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
@@ -756,6 +787,7 @@ export default function MentorStudentRoadmap() {
                   setIsEditItemOpen(false);
                   setEditItemTitle("");
                   setEditItemResourceUrl("");
+                  setEditItemIsMockInterview(false);
                   setSelectedItem(null);
                 }}
               >
