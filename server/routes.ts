@@ -708,35 +708,67 @@
       try {
         const { itemId } = req.params;
         
-        // Get all skills and items to verify sequential order (both global and individual for this mentee)
-        const skills = await storage.getAllSkills();
-        const allItems: any[] = [];
-        for (const skill of skills) {
-          const items = await storage.getRoadmapItemsBySkillId(skill.id);
-          allItems.push(...items);
-        }
-        
-        // Also get individual items for this mentee
+        // Build the same skill/item structure as the learning endpoint
         const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(req.session.userId!);
-        allItems.push(...individualItems);
+        const individualSkills = await storage.getIndividualSkillsByMenteeId(req.session.userId!);
         
-        // Sort all items by order to maintain sequence
-        allItems.sort((a, b) => a.order - b.order);
-  
+        let skillsWithItems;
+        if (individualItems.length > 0 || individualSkills.length > 0) {
+          // Return individual customized roadmap grouped by skill
+          const globalSkills = await storage.getAllSkills();
+          skillsWithItems = await Promise.all(
+            globalSkills.map(async (skill) => {
+              // Get both global and individual items for this skill
+              const globalItems = await storage.getRoadmapItemsBySkillId(skill.id);
+              const customIndividualItems = individualItems.filter(item => item.skillId === skill.id);
+              // Use individual items if they exist (customization), otherwise use global items
+              const items = customIndividualItems.length > 0 ? customIndividualItems : globalItems;
+              return { ...skill, items };
+            })
+          );
+          
+          // Add custom individual skills
+          const individualSkillsWithItems = await Promise.all(
+            individualSkills.map(async (skill) => {
+              const items = await storage.getIndividualRoadmapItemsByMenteeId(req.session.userId!)
+                .then(allItems => allItems.filter(item => item.individualSkillId === skill.id));
+              return { ...skill, items };
+            })
+          );
+          
+          skillsWithItems = [...skillsWithItems, ...individualSkillsWithItems];
+          // Sort all skills by order
+          skillsWithItems.sort((a, b) => a.order - b.order);
+        } else {
+          // Use global roadmap
+          const skills = await storage.getAllSkills();
+          skillsWithItems = await Promise.all(
+            skills.map(async (skill) => {
+              const items = await storage.getRoadmapItemsBySkillId(skill.id);
+              return { ...skill, items };
+            })
+          );
+          // Sort all skills by order
+          skillsWithItems.sort((a, b) => a.order - b.order);
+        }
+
+        // Build the flat sequence of items in order
+        const allItems = skillsWithItems.flatMap(s => s.items);
+
         // Find the item being completed
         const currentItem = allItems.find(item => item.id === itemId);
         if (!currentItem) {
           return res.status(404).json({ message: "Item not found" });
         }
-  
+
         // Prevent completing mock interview items directly - they need approval
         if (currentItem.isMockInterview) {
           return res.status(400).json({ message: "Mock interview items require mentor approval. Please request approval instead." });
         }
-  
+
         // Get current progress
         const existingProgress = await storage.getProgressByMenteeId(req.session.userId!);
-  
+
         // Find the index of the current item in the sequence
         const currentIndex = allItems.findIndex(item => item.id === itemId);
         
@@ -751,10 +783,10 @@
             });
           }
         }
-  
+
         // Mark the item as complete
         const itemProgress = existingProgress.find(p => p.itemId === itemId);
-  
+
         if (itemProgress) {
           await storage.updateProgress(itemProgress.id, {
             completed: true,
@@ -768,7 +800,7 @@
             completedAt: new Date(),
           });
         }
-  
+
         res.json({ message: "Progress updated" });
       } catch (error) {
         console.error("Complete item error:", error);
