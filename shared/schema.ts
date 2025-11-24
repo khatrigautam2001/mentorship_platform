@@ -39,7 +39,7 @@ export const roadmapItems = pgTable("roadmap_items", {
 export const progress = pgTable("progress", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   menteeId: varchar("mentee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  itemId: varchar("item_id").notNull().references(() => roadmapItems.id, { onDelete: 'cascade' }),
+  itemId: varchar("item_id").notNull(),
   completed: boolean("completed").default(false).notNull(),
   completedAt: timestamp("completed_at"),
 });
