@@ -1154,7 +1154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { skillId } = req.params;
 
         // Check if it's a global skill or individual skill
-        const globalSkill = await storage.getSkill(skillId);
+        const globalSkill = await storage.getSkillById(skillId);
         let globalSkillId: string | null = null;
         let individualSkillId: string | null = null;
 
