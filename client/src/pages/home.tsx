@@ -1,75 +1,79 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, BookOpen, Users, Zap, CheckCircle2, Award, Target, Lightbulb } from "lucide-react";
+import { ArrowRight, Database, TrendingUp, Zap, CheckCircle2, Award, BarChart3, Lightbulb } from "lucide-react";
+import dashboardImg from "@assets/generated_images/data_analytics_dashboard_interface.png";
+import mentorImg from "@assets/generated_images/mentor_teaching_data_analytics.png";
+import analystImg from "@assets/generated_images/data_analyst_at_work.png";
+import teamImg from "@assets/generated_images/data_analytics_team_collaboration.png";
 
 export default function Home() {
   const problems = [
     {
-      icon: BookOpen,
-      title: "Lack of Quality Resources",
-      description: "Finding authentic, curated learning materials that actually work is overwhelming and time-consuming.",
+      icon: Database,
+      title: "SQL & Data Queries Overwhelm",
+      description: "Complex SQL syntax, query optimization, and database design concepts feel impossible to master.",
     },
     {
-      icon: Target,
-      title: "No Clear Learning Path",
-      description: "Without structure, it's easy to learn scattered concepts and miss critical fundamentals.",
+      icon: BarChart3,
+      title: "Dashboard Building Confusion",
+      description: "Creating meaningful visualizations and dashboards that actually tell a story is harder than it seems.",
     },
     {
-      icon: Users,
-      title: "No Expert Guidance",
-      description: "Learning alone without feedback from experienced professionals limits growth and leaves gaps.",
+      icon: TrendingUp,
+      title: "No Real-World Projects",
+      description: "Learning theory without practical data analysis projects leaves you unprepared for actual jobs.",
     },
     {
       icon: Zap,
-      title: "Unprepared for Interviews",
-      description: "Mock interviews and real-world practice are essential but difficult to access and arrange.",
+      title: "Interview Anxiety",
+      description: "Data analytics interviews test both technical skills and business thinking—being interview-ready is stressful.",
     },
     {
       icon: Award,
-      title: "Difficulty Tracking Progress",
-      description: "Without clear milestones and tracking, you lose motivation and don't see your actual growth.",
+      title: "Career Path Uncertainty",
+      description: "Unsure which analytics tools to learn, which direction to take, or how to showcase your skills.",
     },
     {
       icon: Lightbulb,
-      title: "Lack of Personalization",
-      description: "One-size-fits-all courses don't adapt to your pace, learning style, or career goals.",
+      title: "Lack of Industry Mentors",
+      description: "Learning from tutorials alone means missing insider knowledge and industry best practices.",
     },
   ];
 
   const solutions = [
     {
-      title: "Personalized Learning Roadmaps",
-      description: "Custom-designed learning paths tailored to your pace and goals, built by experienced mentors.",
+      title: "Data Analytics Roadmap",
+      description: "Master SQL, Python, Tableau, Excel, and business intelligence in the right order with expert guidance.",
     },
     {
-      title: "Structured Skill Building",
-      description: "Sequential learning with clear milestones, resource recommendations, and progress tracking.",
+      title: "Real Projects & Datasets",
+      description: "Work with actual business datasets and build real-world data solutions that go into your portfolio.",
     },
     {
-      title: "Mock Interview Practice",
-      description: "Real interview preparation with feedback from industry professionals to build confidence.",
+      title: "Live Mock Interviews",
+      description: "Practice analytics interview questions with experienced data professionals and get honest feedback.",
     },
     {
-      title: "One-on-One Mentorship",
-      description: "Direct access to experienced mentors for guidance, feedback, and personalized support.",
+      title: "One-on-One Data Mentors",
+      description: "Get paired with working data analysts who guide your learning and share industry secrets.",
     },
     {
-      title: "Progress Tracking & Analytics",
-      description: "Visual dashboard showing your learning journey, completion rates, and skill badges.",
+      title: "Progress Dashboard",
+      description: "Track your journey with visual milestones and skill badges as you master each analytics tool.",
     },
     {
-      title: "Accountability & Motivation",
-      description: "Regular check-ins and milestone celebrations to keep you motivated and on track.",
+      title: "Portfolio Building Support",
+      description: "Get help packaging your projects and learning into a portfolio that impresses hiring managers.",
     },
   ];
 
   const benefits = [
-    { emoji: "⚡", text: "Accelerated Learning - Learn 3x faster with structured guidance" },
-    { emoji: "🎯", text: "Job-Ready Skills - Master skills employers actually need" },
-    { emoji: "📈", text: "Proven Results - Track measurable progress with data" },
-    { emoji: "🤝", text: "Expert Support - Get help when you need it" },
-    { emoji: "🏆", text: "Confidence Boost - Ace interviews with real practice" },
-    { emoji: "📊", text: "Clear Visibility - Know exactly what you've learned and what's next" },
+    { emoji: "📊", text: "Master SQL, Python & Tableau - Learn the tools companies actually use" },
+    { emoji: "💼", text: "Job-Ready in 3-6 Months - Structured path to landing your first analytics role" },
+    { emoji: "🤝", text: "Expert Mentorship - Get guidance from working data analysts" },
+    { emoji: "🎯", text: "Interview Confidence - Practice real analytics questions with feedback" },
+    { emoji: "📈", text: "Portfolio Ready - Build projects that showcase your skills to employers" },
+    { emoji: "🚀", text: "Career Accelerated - Earn more with high-demand analytics skills" },
   ];
 
   return (
@@ -90,37 +94,46 @@ export default function Home() {
             <Button variant="outline" asChild data-testid="button-login">
               <a href="/login">Login</a>
             </Button>
-            <Button asChild data-testid="button-register">
-              <a href="/register">Register</a>
-            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="border-b bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 max-w-4xl mx-auto">
-            Master Your Skills with <span className="text-primary">Personalized Mentorship</span>
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Don't learn alone. Get expert guidance, structured roadmaps, and real interview practice. Transform from learner to professional.
-          </p>
-          <Button size="lg" className="gap-2" data-testid="button-start-journey">
-            Start Your Data Analytics Journey
-            <ArrowRight className="h-5 w-5" />
-          </Button>
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-5xl md:text-6xl font-bold mb-6">
+                Break Into <span className="text-primary">Data Analytics</span>
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8">
+                Master SQL, Python, and Tableau with expert mentors. Land your first analytics role in 3-6 months with real projects and interview prep.
+              </p>
+              <Button size="lg" className="gap-2" data-testid="button-start-journey">
+                Start Your Data Analytics Journey
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+              <img src={dashboardImg} alt="Data Analytics Dashboard" className="w-full h-full object-cover" />
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Problems Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">The Challenges You're Facing</h3>
-            <p className="text-lg text-muted-foreground">
-              These obstacles are holding back your growth. You're not alone.
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-12">
+            <div>
+              <h3 className="text-3xl font-bold mb-4">The Data Analytics Learning Gap</h3>
+              <p className="text-lg text-muted-foreground">
+                Most aspiring analysts hit these frustrating roadblocks. Tutorials don't cover real-world scenarios. You're not alone in feeling stuck.
+              </p>
+            </div>
+            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+              <img src={mentorImg} alt="Mentor Teaching Data Analytics" className="w-full h-full object-cover" />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -149,11 +162,16 @@ export default function Home() {
       {/* Solution Section */}
       <section className="py-20 bg-muted/50">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">The Complete Solution</h3>
-            <p className="text-lg text-muted-foreground">
-              Our mentorship platform provides everything you need to succeed.
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-12">
+            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+              <img src={analystImg} alt="Data Analyst at Work" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h3 className="text-3xl font-bold mb-4">Your Path to Success</h3>
+              <p className="text-lg text-muted-foreground mb-8">
+                Structured mentorship covering every skill employers want. From SQL fundamentals to advanced dashboards and real-world projects.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -177,11 +195,16 @@ export default function Home() {
       {/* Benefits Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">What You'll Gain</h3>
-            <p className="text-lg text-muted-foreground">
-              Real benefits from a structured, personalized learning experience.
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-12">
+            <div>
+              <h3 className="text-3xl font-bold mb-4">What You'll Achieve</h3>
+              <p className="text-lg text-muted-foreground mb-8">
+                Real, measurable results in your data analytics journey.
+              </p>
+            </div>
+            <div className="hidden lg:block rounded-lg overflow-hidden shadow-lg">
+              <img src={teamImg} alt="Data Analytics Team Collaboration" className="w-full h-full object-cover" />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -198,9 +221,9 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 bg-primary/10 border-t">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <h3 className="text-4xl font-bold mb-4">Ready to Transform Your Career?</h3>
+          <h3 className="text-4xl font-bold mb-4">Ready to Launch Your Analytics Career?</h3>
           <p className="text-xl text-muted-foreground mb-8">
-            Join students who are already mastering their skills with expert guidance and proven results.
+            Join students landing analytics roles at top companies. Get expert mentorship, real projects, and interview prep all in one place.
           </p>
           <Button size="lg" className="gap-2" data-testid="button-cta-start">
             Start Your Data Analytics Journey
@@ -212,7 +235,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t bg-muted/30 py-8">
         <div className="max-w-7xl mx-auto px-6 text-center text-sm text-muted-foreground">
-          <p>Transform your future through personalized mentorship and guided learning.</p>
+          <p>Master data analytics with expert mentorship. Start your journey to a high-demand, well-paying career.</p>
         </div>
       </footer>
     </div>
