@@ -41,7 +41,7 @@ export function AppSidebar() {
   const logoutMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/auth/logout", {}),
     onSuccess: () => {
-      setLocation("/login");
+      setLocation("/home");
       toast({
         title: "Logged out",
         description: "You have been logged out successfully",
