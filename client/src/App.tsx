@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { User } from "@shared/schema";
 
+import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import MentorOverview from "@/pages/mentor-overview";
@@ -98,10 +99,11 @@ function Router() {
         {user ? (
           <Redirect to={user.role === "mentor" ? "/mentor/overview" : "/mentee/learning"} />
         ) : (
-          <Redirect to="/login" />
+          <Redirect to="/home" />
         )}
       </Route>
       
+      <Route path="/home" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       
