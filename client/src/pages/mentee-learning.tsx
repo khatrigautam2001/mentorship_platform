@@ -101,12 +101,17 @@ export default function MenteeLearning() {
     },
   });
 
-  const isItemCompleted = (itemId: string) => {
-    return learningData?.progress.some(p => p.itemId === itemId && p.completed) || false;
+  const isItemCompleted = (itemId: string, skill?: SkillWithItems) => {
+    const isProgressCompleted = learningData?.progress.some(p => p.itemId === itemId && p.completed) || false;
+    // If this is a mock interview item and has been approved, treat as completed
+    if (skill && skill.items.some(item => item.id === itemId && item.isMockInterview && learningData?.mockInterviewStatuses[skill.id] === "completed")) {
+      return true;
+    }
+    return isProgressCompleted;
   };
 
-  const isItemUnlocked = (itemId: string) => {
-    return learningData?.nextUnlocked === itemId || isItemCompleted(itemId);
+  const isItemUnlocked = (itemId: string, skill?: SkillWithItems) => {
+    return learningData?.nextUnlocked === itemId || isItemCompleted(itemId, skill);
   };
 
   return (
@@ -155,7 +160,7 @@ export default function MenteeLearning() {
 
           <Accordion type="multiple" defaultValue={learningData.skills.map(s => s.id)} className="space-y-4">
             {learningData.skills.map((skill, skillIndex) => {
-              const completedItems = skill.items.filter(item => isItemCompleted(item.id)).length;
+              const completedItems = skill.items.filter(item => isItemCompleted(item.id, skill)).length;
               const totalItems = skill.items.length;
               const skillProgress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
@@ -186,8 +191,8 @@ export default function MenteeLearning() {
                       <CardContent className="pt-0">
                         <div className="space-y-2">
                           {skill.items.map((item, itemIndex) => {
-                            const completed = isItemCompleted(item.id);
-                            const unlocked = isItemUnlocked(item.id);
+                            const completed = isItemCompleted(item.id, skill);
+                            const unlocked = isItemUnlocked(item.id, skill);
                             const mockStatus = item.isMockInterview ? learningData.mockInterviewStatuses[skill.id] : null;
 
                             return (
@@ -239,7 +244,12 @@ export default function MenteeLearning() {
                                       mockStatus === "pending" ? (
                                         <Badge variant="secondary">
                                           <Clock className="h-3 w-3 mr-1" />
-                                          Pending Review
+                                          Waiting for Approval
+                                        </Badge>
+                                      ) : mockStatus === "completed" ? (
+                                        <Badge variant="secondary" className="text-green-700 dark:text-green-400">
+                                          <Check className="h-3 w-3 mr-1" />
+                                          Completed
                                         </Badge>
                                       ) : (
                                         <Button
