@@ -369,8 +369,16 @@
         });
   
         // Mark the mock interview item as complete
+        // First check global roadmap items
+        let mockItem: any = null;
         const skillItems = await storage.getRoadmapItemsBySkillId(request.skillId);
-        const mockItem = skillItems.find(item => item.isMockInterview);
+        mockItem = skillItems.find(item => item.isMockInterview);
+        
+        // If not found in global items, check individual roadmap items for this mentee
+        if (!mockItem) {
+          const individualItems = await storage.getIndividualRoadmapItemsByMenteeId(request.menteeId);
+          mockItem = individualItems.find(item => item.skillId === request.skillId && item.isMockInterview);
+        }
         
         if (mockItem) {
           const existingProgress = await storage.getProgressByMenteeId(request.menteeId);
