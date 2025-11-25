@@ -1,0 +1,38 @@
+PS C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform> node load-env-and-push.js
+[dotenv@17.2.3] injecting env (1) from .env.local -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+✓ DATABASE_URL loaded successfully
+Running drizzle-kit push...
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file 'C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform\drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+error: relation "session" does not exist
+    at C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform\node_modules\pg-pool\index.js:45:11     
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.query (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform\node_modules\drizzle-kit\bin.cjs:80601:26)
+    at async pgSuggestions (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform\node_modules\drizzle-kit\bin.cjs:81977:23)
+    at async pgPush (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform\node_modules\drizzle-kit\bin.cjs:84368:15)
+    at async Object.handler (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform\node_modules\drizzle-kit\bin.cjs:93813:9)
+    at async run (C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform\node_modules\drizzle-kit\bin.cjs:93059:7) {
+  length: 106,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '31',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+
+✓ Database migration completed!
+PS C:\Users\Aravinth Jayaraman\Downloads\MentorTrackPlatform\MentorTrackPlatform> 
