@@ -414,7 +414,173 @@ Before you start, make sure you have:
 
 ---
 
-## STEP 8: Create the .env.local Configuration File
+## STEP 8: Migrate Your Data from Replit to Neon (OPTIONAL - if you have existing data)
+
+### When to do this step:
+- You have an existing Replit project with data (roadmaps, mentees, progress)
+- You want to copy all that data to your local Neon database
+- Skip this if you're starting fresh with no data
+
+### Why migrate:
+- Keeps your existing roadmaps and mentee data
+- Saves time instead of manually recreating everything
+- Ensures continuity in your mentorship tracking
+
+### What you need:
+- Your Replit project access
+- Terminal in your project folder
+- PostgreSQL tools installed locally (we'll install if needed)
+
+### Part A: Get Your Replit Database Connection String
+
+1. **Log in to Replit**
+   - Go to https://replit.com
+   - Open your Mentorship Progress Tracker project
+
+2. **Find the Secrets/Environment section**
+   - Look at the left sidebar
+   - Find "Secrets" icon (looks like a lock) or "Environment" section
+   - Click on it
+
+3. **Find DATABASE_URL**
+   - You'll see a list of environment variables/secrets
+   - Look for one named `DATABASE_URL`
+   - It will look like:
+     ```
+     postgresql://xxx:xxx@ep-xyz.neon.tech:5432/neondb
+     ```
+
+4. **Copy the entire connection string**
+   - Click the copy button next to DATABASE_URL
+   - Or select all and copy with Ctrl+C / Command+C
+   - Save it in a text editor for now
+   - Label it: "REPLIT_DATABASE_URL"
+
+### Part B: Install PostgreSQL Tools (if you don't have them)
+
+These tools allow you to backup and restore databases.
+
+**For Windows:**
+
+1. **Download PostgreSQL**
+   - Go to https://www.postgresql.org/download/windows/
+   - Click "Download the installer"
+   - Download the latest version
+
+2. **Run the installer**
+   - Double-click the downloaded file
+   - Click "Next" when asked
+   - For "Installation Directory", keep default
+   - For "Components", make sure these are checked:
+     - PostgreSQL Server
+     - pgAdmin 4
+     - Command Line Tools ✓
+   - For Password, create a password (write it down, though you won't need it)
+   - Click "Next" and "Finish"
+
+3. **Verify installation**
+   - Open Command Prompt
+   - Type: `pg_dump --version`
+   - Press Enter
+   - You should see version number (like "pg_dump (PostgreSQL) 15.x")
+
+**For Mac:**
+
+1. **Install using Homebrew**
+   - Open Terminal
+   - Type: `brew install postgresql@15`
+   - Press Enter
+   - Wait for installation
+
+2. **Verify installation**
+   - Type: `pg_dump --version`
+   - Press Enter
+   - You should see version number
+
+### Part C: Export Data from Replit Database
+
+1. **Open Command Prompt/Terminal in your project folder**
+   - Make sure you're in your project folder
+   - Same location as package.json
+
+2. **Export the database**
+   - Type this command (on ONE line):
+     ```
+     pg_dump "postgresql://USER:PASSWORD@HOST:PORT/DATABASE" > replit_backup.sql
+     ```
+   - Replace the connection string with your REPLIT_DATABASE_URL from Part A
+   - Example:
+     ```
+     pg_dump "postgresql://user:mypassword@ep-abc123.neon.tech:5432/neondb" > replit_backup.sql
+     ```
+   - Press Enter
+
+3. **What happens**
+   - It will take 10-30 seconds
+   - A file named `replit_backup.sql` will be created in your project folder
+   - This file contains all your data (schemas, tables, data)
+
+4. **Verify the backup**
+   - Type: `dir replit_backup.sql` (Windows) or `ls replit_backup.sql` (Mac)
+   - Press Enter
+   - You should see the file listed
+   - File size should be more than 1 KB
+
+### Part D: Import Data into Your Neon Database
+
+1. **Import the backup into Neon**
+   - In the same terminal, type this command (on ONE line):
+     ```
+     psql "postgresql://USER:PASSWORD@HOST:PORT/DATABASE" < replit_backup.sql
+     ```
+   - Replace the connection string with your NEON connection string from Step 7
+   - Example:
+     ```
+     psql "postgresql://neondb_owner:mypassword@ep-xyz.us-east-4.aws.neon.tech:5432/neondb" < replit_backup.sql
+     ```
+   - Press Enter
+
+2. **What happens**
+   - It will show many SQL commands being executed
+   - This creates all tables and imports your data
+   - Takes 10-60 seconds depending on data size
+   - When done, your prompt will appear again
+
+3. **Common issues during import**
+   - **"Error: relation already exists"**: This happens if tables were already created
+     - Solution: Continue anyway, data will be imported correctly
+   
+   - **"Error: permission denied"**: Connection string might be wrong
+     - Solution: Double-check your Neon connection string
+   
+   - **"psql: command not found"**: PostgreSQL tools aren't installed
+     - Solution: Go back to Part B and install PostgreSQL
+
+### Part E: Verify Data Migration
+
+1. **Check if tables were created**
+   - Type: `npm run db:push`
+   - Press Enter
+   - Should complete without errors
+   - Output should show migration was applied
+
+2. **Verify data in browser** (after you start the app later)
+   - Run the app with `npm run dev`
+   - Login to your account
+   - Check if your roadmaps are there
+   - Check if your mentees are there
+   - Check if your progress data is intact
+
+### Part F: Clean Up
+
+1. **Delete the backup file** (optional)
+   - You can keep `replit_backup.sql` for safety
+   - Or delete it to save space:
+     - Type: `del replit_backup.sql` (Windows) or `rm replit_backup.sql` (Mac)
+
+---
+
+## STEP 9: Create the .env.local Configuration File
 
 ### What you need:
 - Your connection string from Step 7
@@ -483,10 +649,10 @@ Before you start, make sure you have:
 
 ---
 
-## STEP 9: Test Database Connection (RECOMMENDED)
+## STEP 10: Test Database Connection (RECOMMENDED)
 
 ### What you need:
-- `.env.local` file from Step 8
+- `.env.local` file from Step 9
 - Terminal in your project folder
 - Node.js installed
 
@@ -534,7 +700,7 @@ Before you start, make sure you have:
 
 ---
 
-## STEP 10: Start the Development Server
+## STEP 11: Start the Development Server
 
 ### What you need:
 - Terminal in project folder
@@ -579,15 +745,15 @@ Before you start, make sure you have:
    - **DO NOT close this window** while using the app
    - Your server needs to keep running
    - You can minimize it but don't close it
-   - To close later: Go to Step 13
+   - To close later: Go to Step 15
 
 ---
 
-## STEP 11: Open the Application in Your Browser
+## STEP 12: Open the Application in Your Browser
 
 ### What you need:
 - A web browser (Chrome, Firefox, Safari, Edge)
-- The server running from Step 10 (don't close that terminal)
+- The server running from Step 11 (don't close that terminal)
 
 ### Detailed Instructions:
 
@@ -610,7 +776,7 @@ Before you start, make sure you have:
      - A "Login" button
 
 4. **If the page doesn't load**
-   - Check your terminal window (from Step 10)
+   - Check your terminal window (from Step 11)
    - Verify it shows `[express] serving on port 5000`
    - Wait 10 seconds and refresh the browser (press F5)
    - Check your internet connection
@@ -621,7 +787,7 @@ Before you start, make sure you have:
 
 ---
 
-## STEP 12: Create Your Account and Login
+## STEP 13: Create Your Account and Login
 
 ### What you need:
 - The application loaded in browser from Step 11
@@ -672,7 +838,7 @@ Before you start, make sure you have:
 
 ---
 
-## STEP 13: Test the Application
+## STEP 14: Test the Application
 
 ### What you need:
 - Logged-in application
@@ -706,7 +872,7 @@ Before you start, make sure you have:
 
 ---
 
-## STEP 14: Stop the Application
+## STEP 15: Stop the Application
 
 ### When you want to stop using the app:
 
