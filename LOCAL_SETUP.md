@@ -556,20 +556,38 @@ These tools allow you to backup and restore databases.
    - **"psql: command not found"**: PostgreSQL tools aren't installed
      - Solution: Go back to Part B and install PostgreSQL
 
-### Part E: Verify Data Migration
+### Part E: Add Missing Columns for Individual Skills
 
-1. **Check if tables were created**
-   - Type: `npm run db:push`
-   - Press Enter
-   - Should complete without errors
-   - Output should show migration was applied
+After migrating data from Replit to Neon, you need to add columns that support individual (custom) skills:
 
-2. **Verify data in browser** (after you start the app later)
-   - Run the app with `npm run dev`
+1. **Go to your Neon Database SQL Editor**
+   - Log in to https://console.neon.tech
+   - Select your project
+   - Open the SQL editor
+
+2. **Run these SQL commands:**
+   ```sql
+   ALTER TABLE badges ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+   ALTER TABLE mock_interview_requests ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+   ```
+
+3. **Execute the queries**
+   - These columns support custom skills that mentees can add to their roadmaps
+
+### Part F: Verify Data Migration
+
+1. **Start the development app**
+   - For Windows: `node load-env-and-run-dev.js`
+   - For Mac/Linux: `npm run dev`
+   - App should start without session table errors
+
+2. **Verify data in browser**
+   - Open http://localhost:5000 (or the URL shown in terminal)
    - Login to your account
    - Check if your roadmaps are there
    - Check if your mentees are there
    - Check if your progress data is intact
+   - Go to Students page - should show all student details without errors
 
 ### Part F: Clean Up
 
