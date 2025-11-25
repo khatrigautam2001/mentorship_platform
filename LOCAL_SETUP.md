@@ -4,6 +4,17 @@ This guide will walk you through every single step to get the application runnin
 
 ---
 
+## PRE-FLIGHT CHECKLIST
+
+Before you start, make sure you have:
+- [ ] Computer with internet connection
+- [ ] Web browser (Chrome, Firefox, Safari, or Edge)
+- [ ] Administrator access to your computer
+- [ ] About 30 minutes of time
+- [ ] The Replit project link handy
+
+---
+
 ## STEP 1: Download the Project from Replit
 
 ### What you need:
@@ -21,16 +32,21 @@ This guide will walk you through every single step to get the application runnin
    - Look at the TOP RIGHT corner of the Replit interface
    - You'll see three dots (⋯) or three horizontal lines
    - Click on it
+   - A dropdown menu will appear
 
 3. **Select "Download as zip"**
-   - A dropdown menu will appear
-   - Find and click "Download as zip"
+   - In the menu that appeared, look for "Download as zip" or "Export as zip"
+   - Click on it
    - Your browser will start downloading a file
 
 4. **Wait for download to complete**
    - Look at your browser's download bar (usually bottom of screen)
    - The file will be named something like `replit-project.zip`
-   - Wait until it shows "Download complete"
+   - Wait until it shows "Download complete" or 100%
+   - Do NOT close the browser until download finishes
+
+5. **Verify the download**
+   - Check your Downloads folder to confirm the zip file is there
 
 ---
 
@@ -43,29 +59,32 @@ This guide will walk you through every single step to get the application runnin
 ### For Windows Users:
 
 1. **Find the downloaded file**
-   - Open File Explorer (Windows key + E)
+   - Open File Explorer (press Windows key + E)
    - Click on "Downloads" in the left sidebar
-   - Look for a file named `replit-project.zip`
+   - Look for a file with .zip extension (like `replit-project.zip`)
+   - Right-click on the file
 
-2. **Right-click on the zip file**
-   - Place your cursor on the zip file
-   - Click your right mouse button
+2. **Extract the file**
    - A context menu will appear
-
-3. **Select "Extract All"**
-   - In the menu that appeared, click "Extract All..."
+   - Click on "Extract All..."
    - A dialog box will open
 
-4. **Choose extraction location**
+3. **Choose extraction location**
    - You'll see a text field with a folder path
-   - Click "Browse" to choose where to save
-   - Select a location (example: C:\Users\YourName\Documents)
+   - Example: `C:\Users\YourName\Downloads\`
+   - You can keep it in Downloads or click "Browse" to choose a better location
+   - Suggested location: `C:\Users\YourName\Documents\mentorship-tracker`
    - Click "Select Folder"
 
-5. **Click "Extract"**
-   - In the dialog box, click the "Extract" button
-   - Wait for the file to be extracted (you'll see a progress bar)
-   - When done, a new folder will appear with all the project files
+4. **Start extraction**
+   - In the dialog, click the "Extract" button
+   - You'll see a progress bar
+   - Wait for extraction to complete (usually 10-30 seconds)
+
+5. **Verify extraction**
+   - After extraction, open the new folder
+   - You should see folders: `client`, `server`, `shared`, `node_modules` (if exists)
+   - You should see files: `package.json`, `.gitignore`, `tsconfig.json`, etc.
 
 ### For Mac Users:
 
@@ -74,542 +93,972 @@ This guide will walk you through every single step to get the application runnin
    - Click on "Downloads" in the sidebar
    - Look for `replit-project.zip`
 
-2. **Double-click the zip file**
+2. **Extract the file**
+   - Double-click the zip file
    - The file will automatically extract
-   - A folder named `replit-project` (or similar) will appear
+   - A folder named `replit-project` will appear
 
 3. **Move the folder** (optional)
    - You can move this folder to a better location
    - Drag it to your Documents folder or Desktop
+   - Or keep it in Downloads
+
+4. **Verify extraction**
+   - Open the extracted folder
+   - You should see: `client`, `server`, `shared` folders
+   - You should see: `package.json` and other files
 
 ---
 
-## STEP 3: Open Command Prompt or Terminal
+## STEP 3: Open Command Prompt or Terminal in Project Folder
 
 ### For Windows Users:
 
 1. **Open File Explorer**
-   - Press Windows key + E on your keyboard
+   - Press Windows key + E
 
 2. **Navigate to your project folder**
-   - Find the extracted project folder (from Step 2)
+   - Click on your extracted project folder
    - Double-click to open it
-   - You should see folders named `client`, `server`, `shared`, etc.
+   - You should be inside the folder with `client`, `server`, `shared` folders visible
 
 3. **Open Command Prompt here**
-   - Click on the address bar at the TOP of the window
-   - It shows the folder path (like C:\Users\YourName\Documents\replit-project)
+   - Look at the address bar at the TOP of File Explorer
+   - It shows the folder path (like: C:\Users\YourName\Documents\mentorship-tracker)
+   - Click on the address bar
    - Type: `cmd`
    - Press Enter
-   - A Command Prompt window will open
+   - A Command Prompt window will open with the folder path shown
 
 4. **Verify you're in the right folder**
-   - In the command prompt, type: `dir`
+   - You should see your folder path in the command prompt
+   - Type: `dir`
    - Press Enter
-   - You should see folders: `client`, `server`, `shared`, `node_modules` (if exists)
+   - You should see output listing:
+     - `<DIR> client`
+     - `<DIR> server`
+     - `<DIR> shared`
+     - (and other files)
 
 ### For Mac Users:
 
 1. **Open Terminal**
-   - Press Command + Space
+   - Press Command + Space (opens Spotlight search)
    - Type: `terminal`
    - Press Enter
-   - Terminal will open
+   - Terminal window will open
 
 2. **Navigate to your project folder**
-   - Type this command:
+   - Type this command (replace with your path):
      ```
-     cd ~/Documents/replit-project
+     cd ~/Documents/mentorship-tracker
      ```
-   - Replace `replit-project` with your actual folder name
+   - Or if your folder has a different name:
+     ```
+     cd ~/Downloads/replit-project
+     ```
    - Press Enter
 
 3. **Verify you're in the right folder**
    - Type: `ls`
    - Press Enter
-   - You should see: `client`, `server`, `shared`, and other folders
+   - You should see output showing:
+     - `client/`
+     - `server/`
+     - `shared/`
+     - (and other files)
 
 ---
 
-## STEP 4: Check if Node.js is Installed
+## STEP 4: Verify Node.js is Installed (IMPORTANT)
 
 ### What you need:
-- The terminal/command prompt (from Step 3)
+- Terminal/command prompt (from Step 3)
+- Your computer
+
+### Why this is important:
+- The application requires Node.js to run
+- Without it, nothing will work
+- This step prevents "command not found" errors later
 
 ### Detailed Instructions:
 
-1. **Type the version check command**
-   - In your terminal, type: `node --version`
+1. **Check if Node.js is installed**
+   - In terminal, type exactly: `node --version`
    - Press Enter
 
 2. **Check the result**
-   - **If you see a version** (like `v18.14.0` or `v20.10.0`):
-     - Great! Node.js is installed ✓
-     - You can skip to Step 5
+   - **If you see a version number** (like `v18.14.0` or `v20.10.0`):
+     - **Great!** Node.js is installed ✓
+     - Write down the version number (you might need it later)
+     - Skip to Step 5
    
-   - **If you see "command not found" or "node is not recognized"**:
+   - **If you see an error** like "command not found" or "node is not recognized as an internal command":
      - Node.js is NOT installed
-     - Go to https://nodejs.org
-     - Click the LTS (Long Term Support) button - usually on the left
-     - Download the installer for your operating system
-     - Run the installer and follow the installation wizard
-     - Accept all default options
-     - At the end, restart your computer
-     - After restart, open terminal again and repeat the `node --version` command
+     - Follow the installation steps below
 
-3. **Also check npm (Node Package Manager)**
+### How to install Node.js if needed:
+
+1. **Go to Node.js website**
+   - Open your web browser
+   - Go to https://nodejs.org
+   - You'll see two download buttons
+
+2. **Download the LTS version**
+   - The LTS (Long Term Support) version is recommended
+   - It's usually on the left side of the page
+   - The version number should be something like 18.x or 20.x (not odd numbers like 19.x)
+   - Click the LTS button
+   - Choose your operating system (Windows or Mac will auto-detect)
+   - Click "Download"
+
+3. **Install Node.js**
+   - Find the downloaded installer file in your Downloads folder
+   - Double-click it to run
+   - An installer window will appear
+
+4. **Follow the installation wizard**
+   - Click "Next" or "Continue" multiple times
+   - Accept the license agreement if asked
+   - Keep all default settings (don't change anything)
+   - Click "Install" or "Finish"
+   - Wait for installation to complete
+
+5. **Restart your computer**
+   - **This is VERY important** - don't skip this step
+   - Restart your computer completely
+   - This ensures Node.js is properly added to your system
+
+6. **Verify installation after restart**
+   - Open a NEW terminal/command prompt window
+   - Type: `node --version`
+   - Press Enter
+   - You should now see a version number
+
+### Also check npm:
+
+1. **npm comes with Node.js**
    - Type: `npm --version`
    - Press Enter
    - You should see a version number (like `9.8.1`)
 
+2. **If you see an error**
+   - Try restarting your computer again
+   - If still not working, reinstall Node.js
+
 ---
 
-## STEP 5: Install Project Dependencies
+## STEP 5: Clear npm Cache (Prevents Install Errors)
+
+### What you need:
+- Terminal/command prompt in your project folder
+- Node.js installed from Step 4
+
+### Why this helps:
+- Fixes "package not found" errors during installation
+- Prevents corrupted cache issues
+- Takes only 30 seconds
+
+### Detailed Instructions:
+
+1. **Make sure you're in your project folder**
+   - Your terminal should show the project folder path
+   - If not, follow Step 3 again
+
+2. **Clear the npm cache**
+   - Type: `npm cache clean --force`
+   - Press Enter
+
+3. **Wait for completion**
+   - You'll see output messages
+   - When done, your prompt will appear again
+   - It looks like: `npm cache clean --force` is complete when you see `$` or `>` again
+
+4. **What you should see**
+   - Some output lines (that's normal)
+   - No red error messages
+   - Command prompt cursor appears again
+
+---
+
+## STEP 6: Install Project Dependencies
 
 ### What you need:
 - Terminal/command prompt (from Step 3)
 - Node.js installed (from Step 4)
+- Cache cleared (from Step 5)
+
+### Why this step:
+- Downloads all packages the application needs
+- Without this, the app won't run
+- Takes 3-5 minutes
 
 ### Detailed Instructions:
 
-1. **Make sure you're in the project folder**
-   - Your terminal should show the path with `replit-project`
-   - If not, repeat Step 3
+1. **Verify you're in project folder**
+   - Type: `pwd` (Mac) or `cd` (Windows) and press Enter
+   - You should see the folder path with "mentorship" or "replit-project" in it
 
-2. **Run the install command**
-   - Type: `npm install`
+2. **Run npm install**
+   - Type exactly: `npm install`
    - Press Enter
 
-3. **What happens next**
-   - Your terminal will show lots of lines
-   - It will say "added X packages, took Y seconds"
-   - This takes 2-5 minutes depending on your internet speed
-   - You'll see a progress bar or percentage
+3. **What happens during installation**
+   - Terminal will show many lines of output
+   - You'll see dots/progress bars
+   - You might see some warnings (usually harmless - yellow/orange text)
+   - **Do NOT stop this process** - let it run to completion
 
 4. **When installation is complete**
-   - You should see something like:
+   - You'll see a summary line like:
      ```
      added 850 packages in 2m
      ```
    - Your command prompt cursor will appear again
-   - If you see red errors, something went wrong - check the error message
+   - You're back to the `$` or `>` prompt
 
-5. **Verify installation**
+5. **What NOT to see**
+   - **Red error messages that say "ERR!"** - This means something failed
+   - If you see errors, try running `npm install` again
+   - If it fails twice, clear cache with `npm cache clean --force` and try again
+
+6. **Verify installation worked**
    - Type: `ls node_modules` (Mac) or `dir node_modules` (Windows)
    - Press Enter
-   - You should see many folder names
-   - This confirms dependencies are installed
+   - You should see a long list of folder names (hundreds of them)
+   - If you see a list, installation was successful ✓
 
 ---
 
-## STEP 6: Set Up Online Database with Neon
+## STEP 7: Set Up Your Online Database with Neon
 
 ### Why Neon?
-- Neon is a managed PostgreSQL database service
+- Neon is a cloud PostgreSQL database (like AWS but simpler)
 - Works perfectly for this application
-- Free tier available
-- No need to install PostgreSQL locally
+- Free tier available (includes free database)
+- No need to install anything locally
+- Accessible from anywhere
 
-### Detailed Instructions:
+### Part A: Create Neon Account
 
-1. **Create a Neon account**
-   - Open your web browser
+1. **Open your web browser**
    - Go to https://neon.tech
-   - Click "Sign Up" button
+
+2. **Click Sign Up**
+   - You'll see a "Sign Up" button
+   - Click on it
+   - Or click "Get Started"
+
+3. **Enter your email**
    - Enter your email address
-   - Create a password
-   - Click "Sign Up"
-   - Verify your email by clicking the link sent to you
+   - The email you use here is just for account login (not for the app)
 
-2. **Create a new project in Neon**
-   - After logging in, you'll see the Neon dashboard
-   - Click "Create Project"
-   - Give it a name: `mentorship-tracker`
-   - Select the region closest to you
-   - Click "Create Project"
-   - Wait for the project to be created (takes about 30 seconds)
+4. **Create a password**
+   - Create a strong password (mix of letters, numbers, symbols)
+   - Write it down somewhere safe
+   - You'll need this password next time you log in to Neon
 
-3. **Get your database connection string**
-   - In the Neon dashboard, you'll see your project
-   - Click on "Connection" or "Connection String"
-   - Look for the "Connection String" section
-   - You'll see something like:
+5. **Click Sign Up or Create Account**
+   - Neon might send you a verification email
+   - Check your email and click the verification link
+   - You'll be logged into Neon
+
+6. **Complete profile** (if asked)
+   - You can skip most fields
+   - Just complete what's required
+
+### Part B: Create a Database Project
+
+1. **In the Neon dashboard**
+   - After login, you'll see the main dashboard
+   - Look for "Create Project" or "New Project" button
+   - Click it
+
+2. **Fill in project details**
+   - **Project Name**: Type `mentorship-tracker` (or any name you want)
+   - **Database Name**: Leave as `neondb` (default is fine)
+   - **Region**: Select the region closest to you (usually auto-selected)
+   - **Postgres Version**: Leave as default (latest version)
+
+3. **Click Create Project**
+   - Wait for project creation (takes about 30 seconds)
+   - You'll see a loading screen
+   - Then you'll be taken to the project page
+
+### Part C: Get Your Connection String
+
+1. **Find the Connection String section**
+   - On your Neon project page, look for "Connection" or "Database"
+   - Click on it
+
+2. **Look for Connection String**
+   - You'll see different connection options
+   - Look for the one labeled "Connection string" or "PostgreSQL"
+   - It will look something like:
      ```
-     postgresql://user:password@host:port/database
+     postgresql://user:password@host:5432/database
      ```
-   - Click the copy button next to it (or select and copy manually)
-   - This is your DATABASE_URL
-
-4. **Important: Make a note**
-   - Copy this string somewhere safe (notepad)
-   - You'll need it in the next step
-   - Example format:
+   - Example full string:
      ```
      postgresql://neondb_owner:abc123xyz@ep-xyz.us-east-4.aws.neon.tech:5432/neondb
      ```
 
+3. **Copy the connection string**
+   - Click the copy button next to it (clipboard icon)
+   - Or select all the text and press Ctrl+C (Windows) or Command+C (Mac)
+
+4. **Save it somewhere safe**
+   - Paste it into Notepad or a text editor temporarily
+   - You'll need this in the next step
+   - **Important**: This string contains your password - keep it private
+
 ---
 
-## STEP 7: Create the .env.local File
+## STEP 8: Create the .env.local Configuration File
 
 ### What you need:
-- Your DATABASE_URL from Step 6
-- A text editor (Notepad, VS Code, or any text editor)
-- The project folder open
+- Your connection string from Step 7
+- A text editor (Notepad, VS Code, TextEdit)
+- Your project folder
+
+### Why this step:
+- This tells the application how to connect to your database
+- Without this file, the app can't access the database
 
 ### Detailed Instructions:
 
-1. **Open your text editor**
-   - Windows: Right-click in your project folder → "New" → "Text Document"
-   - Mac: Open TextEdit from Applications
-
-2. **Create the .env.local file**
-   - In your text editor, paste this:
-     ```
-     DATABASE_URL=postgresql://YOUR_CONNECTION_STRING_HERE
-     ```
+1. **Open a text editor**
+   - **Windows**: 
+     - Right-click in your project folder
+     - Select "New" → "Text Document"
+     - A file named "New Text Document.txt" will appear
    
-3. **Replace with your actual connection string**
-   - Delete `YOUR_CONNECTION_STRING_HERE`
-   - Paste the DATABASE_URL from Step 6
-   - Example of what it should look like:
+   - **Mac**: 
+     - Open TextEdit from Applications → Utilities
+     - Press Command + Shift + T to use plain text mode
+
+2. **Create the file content**
+   - In your text editor, type this exact text:
      ```
      DATABASE_URL=postgresql://neondb_owner:abc123xyz@ep-xyz.us-east-4.aws.neon.tech:5432/neondb
      ```
+   - **But replace the connection string** with your actual string from Step 7
 
-4. **Save the file**
-   - Windows: Click "File" → "Save As"
-   - Mac: Press Command + S
-   - **Important**: Change the filename to `.env.local` (note the dot at the beginning)
-   - Save location: Inside your project folder (same level as `package.json`)
-   - Click "Save"
+3. **How to replace it**
+   - Delete everything after `DATABASE_URL=`
+   - Paste your connection string from Neon
+   - The line should start with `DATABASE_URL=` and end with your database name
+   - Example:
+     ```
+     DATABASE_URL=postgresql://neondb_owner:YourPasswordHere@ep-abc123.us-east-4.aws.neon.tech:5432/neondb
+     ```
 
-5. **Verify the file was saved**
-   - Go back to your project folder in File Explorer/Finder
-   - You should see `.env.local` file
-   - On Windows, it might show as a file without extension
-   - On Mac, check View options if you don't see the dot files
+4. **Save the file with correct name**
+   - **Windows**: 
+     - Click "File" → "Save As"
+     - In the filename field, type: `.env.local` (with the dot)
+     - In "Save as type", select "All Files (*.*)" not "Text Documents"
+     - Save location: Inside your project folder (same level as package.json)
+     - Click "Save"
+   
+   - **Mac**: 
+     - Press Command + S
+     - For filename, type: `.env.local`
+     - For location, navigate to your project folder
+     - Click "Save"
+
+5. **Verify the file exists**
+   - Go back to File Explorer/Finder
+   - Navigate to your project folder
+   - Look for `.env.local` file
+   - **Windows**: It might appear as a file without extension - that's okay
+   - **Mac**: Check if you can see hidden files (files starting with dot)
+     - If you can't see it, press Command + Shift + . to show hidden files
+
+6. **Important notes about this file**
+   - The filename MUST be `.env.local` (with the dot at the beginning)
+   - If it's named something else (like `env.local` or `.env.local.txt`), it won't work
+   - Keep this file private - it contains your database password
+   - Never commit it to git or share it
 
 ---
 
-## STEP 8: Initialize the Database
+## STEP 9: Test Database Connection (RECOMMENDED)
 
 ### What you need:
-- Terminal/command prompt with your project folder open
-- The .env.local file created (from Step 7)
+- `.env.local` file from Step 8
+- Terminal in your project folder
+- Node.js installed
+
+### Why this step:
+- Verifies your database connection works BEFORE starting the app
+- Prevents "database connection" errors later
+- Takes only 1 minute
 
 ### Detailed Instructions:
 
-1. **Go back to your terminal**
-   - Make sure you're still in your project folder
-   - If you closed it, repeat Step 3
-
-2. **Run the database setup command**
+1. **In your terminal, run database check**
+   - Make sure you're in your project folder
    - Type: `npm run db:push`
    - Press Enter
 
-3. **What happens**
-   - Your terminal will connect to your Neon database
+2. **What should happen**
+   - Terminal will connect to your Neon database
    - It will create all necessary tables
    - You should see messages like:
      ```
      ✓ [drizzle-kit] Your migration is ready
-     ✓ [drizzle-kit] Changes applied to database
+     ✓ [drizzle-kit] Changes applied
      ```
 
-4. **If you see an error**
-   - Check that your `.env.local` file has the correct DATABASE_URL
-   - Make sure you have internet connection
-   - Make sure Neon account is active
+3. **If successful**
+   - Your database is now set up ✓
+   - All tables are created
+   - You can proceed to Step 10
 
-5. **When complete**
-   - Your cursor will appear again in the terminal
-   - The database is now ready with all tables
+4. **If you see an error**
+   - **"Error: Unauthorized" or "ECONNREFUSED"**: Connection string is wrong
+     - Go back to Neon
+     - Copy the connection string again carefully
+     - Update `.env.local` file
+     - Try again
+   
+   - **"Error: relation does not exist"**: Database was partially created
+     - This is okay - run the command again
+   
+   - **"error: password authentication failed"**: Password in connection string is wrong
+     - Go to Neon → Settings
+     - Reset the database password
+     - Get new connection string
+     - Update `.env.local`
 
 ---
 
-## STEP 9: Start the Development Server
+## STEP 10: Start the Development Server
 
 ### What you need:
-- Terminal/command prompt in project folder
-- All previous steps completed
+- Terminal in project folder
+- All previous steps completed successfully
+
+### Why this step:
+- This starts the backend and frontend servers
+- Makes the app accessible at localhost:5000
 
 ### Detailed Instructions:
 
-1. **Run the development server**
-   - In terminal, type: `npm run dev`
+1. **Make sure you're in the project folder**
+   - Terminal should show your project path
+   - If not, repeat Step 3
+
+2. **Start the development server**
+   - Type exactly: `npm run dev`
    - Press Enter
 
-2. **What you should see**
-   - Terminal will show:
+3. **Wait for startup**
+   - Terminal will show startup messages
+   - This takes about 10-20 seconds
+   - Look for messages like:
      ```
-     > npm run dev
      > rest-express@1.0.0 dev
      > NODE_ENV=development tsx server/index-dev.ts
      ```
-   - Wait a few seconds
-   - You should see:
+
+4. **Look for success message**
+   - After a few seconds, you should see:
      ```
      [express] serving on port 5000
      ```
+   - This means the server is running ✓
 
-3. **Important notes**
-   - DO NOT close this terminal window
-   - The server needs to stay running
-   - You'll use another terminal/browser for the next steps
+5. **What you should NOT see**
+   - Red error messages with "ERROR" in them
+   - "port 5000 is already in use" (see troubleshooting if you see this)
+   - "Cannot find module" errors
 
-4. **If something went wrong**
-   - Check if port 5000 is already in use
-   - Check the error message in the terminal
-   - Look at the troubleshooting section below
+6. **Keep this terminal window open**
+   - **DO NOT close this window** while using the app
+   - Your server needs to keep running
+   - You can minimize it but don't close it
+   - To close later: Go to Step 13
 
 ---
 
-## STEP 10: Open the Application in Your Browser
+## STEP 11: Open the Application in Your Browser
 
 ### What you need:
-- A web browser (Chrome, Firefox, Safari, Edge, etc.)
-- The server running from Step 9
+- A web browser (Chrome, Firefox, Safari, Edge)
+- The server running from Step 10 (don't close that terminal)
 
 ### Detailed Instructions:
 
-1. **Open a new browser tab**
-   - Press Ctrl + T (Windows) or Command + T (Mac)
-   - Or just open your browser
+1. **Open your web browser**
+   - Click the browser icon on your desktop/taskbar
+   - Or press Ctrl+Space and search for your browser
 
 2. **Type the local address**
-   - In the address bar, type: `http://localhost:5000`
+   - Click on the address bar at the top (where URLs go)
+   - Type exactly: `http://localhost:5000`
    - Press Enter
 
 3. **Wait for the page to load**
    - It will take 2-5 seconds
    - You should see the Mentorship Progress Tracker login page
-   - The page has a login form with Email and Password fields
+   - The page will show:
+     - A title like "Mentorship Progress Tracker"
+     - An email input field
+     - A password input field
+     - A "Login" button
 
 4. **If the page doesn't load**
-   - Check that the terminal shows "[express] serving on port 5000"
+   - Check your terminal window (from Step 10)
+   - Verify it shows `[express] serving on port 5000`
+   - Wait 10 seconds and refresh the browser (press F5)
    - Check your internet connection
-   - Try refreshing the page (F5)
-   - Wait 10 seconds and try again
+   - If still not working, see Troubleshooting section
+
+5. **You're ready to create an account!**
+   - The app is now running ✓
 
 ---
 
-## STEP 11: Create Your Account
+## STEP 12: Create Your Account and Login
 
 ### What you need:
-- The application loaded in browser from Step 10
-- An email address
-- A strong password
+- The application loaded in browser from Step 11
+- An email address (any email)
+- A strong password (at least 8 characters)
 
 ### Detailed Instructions:
 
-1. **Find the Sign Up link**
-   - On the login page, look for a link that says "Sign Up" or "Create Account"
-   - Click on it
+1. **Find the Sign Up option**
+   - On the login page, look for:
+     - "Don't have an account?" text
+     - "Create Account" link
+     - "Sign Up" button
+   - Click on it to go to sign-up page
 
 2. **Fill in the sign-up form**
-   - **Email field**: Enter your email address (example: yourname@gmail.com)
-   - **Password field**: Enter a strong password (at least 8 characters, mix of letters and numbers)
-   - **Confirm Password**: Repeat your password
-   - **User Type**: Choose either:
-     - "Mentor" - if you're managing mentees and roadmaps
-     - "Mentee" - if you're learning through a roadmap
+   - **Email field**: 
+     - Type your email address (example: yourname@gmail.com)
+     - This email will be your login credentials
+   
+   - **Password field**: 
+     - Create a strong password (8+ characters)
+     - Use mix of: letters, numbers, symbols
+     - Example: `SecurePass123!`
+   
+   - **Confirm Password**: 
+     - Type the same password again
+   
+   - **User Type**: 
+     - Choose ONE:
+       - **"Mentor"** - if you're creating roadmaps and managing students
+       - **"Mentee"** - if you're learning through a roadmap
 
 3. **Click Sign Up button**
    - After filling all fields, click the "Sign Up" button
    - The page will process your request
 
-4. **What happens next**
-   - You should be redirected to the dashboard
-   - You'll see your role's specific interface
-   - You're now logged in!
+4. **What happens after sign up**
+   - You'll be redirected to your dashboard
+   - You'll see different interface based on your role:
+     - **Mentors**: See dashboard with roadmaps and students
+     - **Mentees**: See your learning journey and skills
+   - You're now logged in ✓
+
+5. **Keep your credentials safe**
+   - Write down your email and password somewhere safe
+   - You'll need them to log in again later
 
 ---
 
-## STEP 12: Verify Everything Works
+## STEP 13: Test the Application
+
+### What you need:
+- Logged-in application
+- Browser with developer console open
 
 ### Detailed Instructions:
 
-1. **If you're a Mentor**
-   - You should see a dashboard to manage roadmaps
-   - You can see options to create roadmaps and add mentees
-   - Try clicking around to explore
+1. **Test page loading**
+   - Navigate to different pages in the app
+   - Check that pages load without errors
+   - Click buttons to verify they work
 
-2. **If you're a Mentee**
-   - You should see your learning journey
-   - You can see skills to learn
-   - You can see progress and badges
-
-3. **Check the browser console for errors**
+2. **Open browser console** (optional - for debugging)
    - Press F12 on your keyboard
    - Look at the "Console" tab
-   - If you see red errors, note them down
+   - Check for red error messages
+   - If you see errors, note them down
 
-4. **Keep the terminal running**
-   - Your development server needs to keep running
-   - Don't close the terminal window
-   - You can minimize it
+3. **Verify database connection**
+   - In your application, perform an action:
+     - Create something new
+     - Edit something
+     - Mark something complete
+   - If it works, database connection is good ✓
 
----
-
-## STEP 13: Stop the Application
-
-### When you're done for the day:
-
-1. **Go back to your terminal**
-   - Find the terminal where you ran `npm run dev`
-   - Click on it to make it active
-
-2. **Stop the server**
-   - Press Ctrl + C (on Windows or Mac)
-   - You'll see a message like "^C"
-
-3. **Verify it stopped**
-   - The terminal cursor should appear again
-   - You can now close the terminal
-
-4. **Your application is now stopped**
-   - The website at localhost:5000 will no longer work
-   - Your database remains intact in Neon
-   - You can restart it anytime with `npm run dev`
+4. **If you see errors**
+   - Check the browser console (F12)
+   - Check the terminal window where server is running
+   - Note any error messages
+   - Refer to troubleshooting section below
 
 ---
 
-## Troubleshooting
+## STEP 14: Stop the Application
 
-### Issue 1: "Port 5000 is already in use"
+### When you want to stop using the app:
 
-**What it means:** Another application is using port 5000
+1. **Save your work**
+   - Make sure any changes are saved in the app
 
-**Solution:**
-1. Find what's using the port:
-   - Windows: `netstat -ano | findstr :5000`
-   - Mac: `lsof -i :5000`
-2. Close the other application
-3. Or, change the port in the code:
-   - Open `server/index-dev.ts`
-   - Find `5000` and change to `5001`
-   - Save and try again
+2. **Close browser tab**
+   - Just close the browser tab or window with the app
+   - No data will be lost
 
----
+3. **Stop the server** (optional but recommended)
+   - Click on the terminal window where `npm run dev` is running
+   - Press Ctrl + C on your keyboard
+   - You'll see `^C` in the terminal
+   - The server will stop
 
-### Issue 2: "npm: command not found"
+4. **Verify it stopped**
+   - After pressing Ctrl+C, your prompt will appear again
+   - Terminal is now ready for new commands
+   - You can close the terminal window now
 
-**What it means:** Node.js is not installed or not in your system PATH
-
-**Solution:**
-1. Go to https://nodejs.org
-2. Download the LTS version
-3. Run the installer
-4. Restart your computer
-5. Open a new terminal and try again
+5. **Your data remains safe**
+   - Everything is saved in Neon database
+   - You can start the app again anytime with `npm run dev`
 
 ---
 
-### Issue 3: "Database connection error"
+## TROUBLESHOOTING GUIDE
 
-**What it means:** The .env.local file or DATABASE_URL is incorrect
+### ERROR 1: "npm: command not found"
 
-**Solution:**
-1. Check your .env.local file exists in project folder
-2. Verify the DATABASE_URL is correct:
-   - Go to https://neon.tech
-   - Log in to your account
+**When you see it**: During Step 5 or later
+
+**What it means**: Node.js is not installed or not in your system PATH
+
+**Solution**:
+1. Go to Step 4 again to install Node.js
+2. Make sure you restart your computer after installation
+3. Open a NEW terminal window after restart
+4. Try again
+
+---
+
+### ERROR 2: "Port 5000 is already in use"
+
+**When you see it**: When running `npm run dev` in Step 10
+
+**What it means**: Another application is already using port 5000
+
+**Solution Option A - Find and close the other app**:
+1. Close other applications that might use port 5000
+2. Check if another terminal window has a dev server running
+3. Stop that server first
+4. Try `npm run dev` again
+
+**Solution Option B - Use a different port**:
+1. Stop `npm run dev` (press Ctrl+C)
+2. Type: `PORT=5001 npm run dev`
+3. Then go to: `http://localhost:5001`
+
+**Solution Option C - Windows specific**:
+1. Find what's using port 5000:
+   - Type: `netstat -ano | findstr :5000`
+   - Note the PID number shown
+2. Kill the process:
+   - Type: `taskkill /PID [number] /F`
+   - Replace [number] with the PID from above
+3. Try `npm run dev` again
+
+---
+
+### ERROR 3: "DATABASE_URL is not set" or "cannot connect to database"
+
+**When you see it**: During Step 9 or Step 10
+
+**What it means**: `.env.local` file is missing, misnamed, or database URL is wrong
+
+**Solution**:
+1. Verify `.env.local` file exists in project folder
+   - Check filename is exactly `.env.local` (with dot)
+   - Not `env.local` or `.env.local.txt`
+   - If missing, create it (repeat Step 8)
+
+2. Verify content is correct
+   - Open `.env.local` in text editor
+   - First line should be: `DATABASE_URL=postgresql://...`
+   - Make sure connection string is complete (no line breaks)
+
+3. Check connection string
+   - Go to Neon.tech
+   - Log in to your project
    - Copy the connection string again
-   - Update .env.local with the correct string
-3. Save the file
-4. Run `npm run db:push` again
+   - Paste it into `.env.local`
+
+4. Try again
+   - Save `.env.local`
+   - Run `npm run db:push` to test
+   - Then run `npm run dev`
 
 ---
 
-### Issue 4: "Module not found" or "Cannot find module"
+### ERROR 4: "error: relation "session" does not exist"
 
-**What it means:** Dependencies weren't installed properly
+**When you see it**: In terminal when trying to login
 
-**Solution:**
-1. Delete `node_modules` folder:
-   - Windows: Delete the folder manually
-   - Mac: `rm -rf node_modules`
-2. Delete `package-lock.json` file
-3. Run `npm install` again
-4. Wait for completion
-5. Run `npm run dev` again
+**What it means**: Database tables weren't created properly
 
----
+**Solution**:
+1. Run database setup:
+   - Stop server (press Ctrl+C)
+   - Type: `npm run db:push`
+   - Wait for completion
+   - Then run `npm run dev` again
 
-### Issue 5: "ERR! 404 while downloading" during npm install
-
-**What it means:** One of the packages isn't available for download
-
-**Solution:**
-1. Check your internet connection
-2. Try again with: `npm install --force`
-3. If still fails, try: `npm cache clean --force` then `npm install`
+2. If error continues:
+   - This might be a temporary issue
+   - Stop server (Ctrl+C)
+   - Wait 5 seconds
+   - Run `npm run dev` again
 
 ---
 
-### Issue 6: "ENOENT: no such file or directory"
+### ERROR 5: "Module not found" or "Cannot find module"
 
-**What it means:** You're not in the correct project folder
+**When you see it**: During Step 10 startup or browser console
 
-**Solution:**
-1. Go back to Step 3
-2. Navigate to your project folder in terminal
-3. Verify with `dir` (Windows) or `ls` (Mac)
-4. You should see: `client`, `server`, `shared` folders
+**What it means**: Dependencies weren't installed properly
 
----
-
-### Issue 7: Page shows blank or won't load
-
-**What it means:** The frontend didn't compile correctly
-
-**Solution:**
-1. Check the terminal where `npm run dev` is running
-2. Look for red error messages
-3. Check the browser console (F12)
-4. Try refreshing the page (F5)
-5. If still fails, stop and restart with `npm run dev`
+**Solution**:
+1. Stop server (press Ctrl+C)
+2. Delete dependencies:
+   - Type: `rm -rf node_modules` (Mac) or delete `node_modules` folder manually (Windows)
+   - Also delete `package-lock.json` file
+3. Reinstall:
+   - Type: `npm cache clean --force`
+   - Type: `npm install`
+   - Wait for completion
+4. Try again:
+   - Type: `npm run dev`
 
 ---
 
-## Next Steps After Successful Login
+### ERROR 6: "Cannot read properties of undefined"
 
-### As a Mentor:
-1. Create a new roadmap with skills
-2. Add mentees to your roadmap
-3. Monitor their progress
-4. Approve mock interview requests
+**When you see it**: Browser console or app stops working
 
-### As a Mentee:
-1. Check your learning roadmap
-2. Mark skills as complete
-3. Request mock interviews
-4. View your earned badges
+**What it means**: Frontend tried to use data that doesn't exist yet
+
+**Solution**:
+1. Refresh the browser (F5)
+2. Wait 5 seconds
+3. Try the action again
+4. If it keeps happening:
+   - Stop server (Ctrl+C)
+   - Run `npm run dev` again
+   - Refresh browser
 
 ---
 
-## Quick Reference - Terminal Commands
+### ERROR 7: "ENOENT: no such file or directory"
+
+**When you see it**: During `npm install` or other npm commands
+
+**What it means**: You're not in the correct project folder
+
+**Solution**:
+1. Verify you're in project folder
+   - Type: `pwd` (Mac) or `cd` (Windows)
+   - Press Enter
+   - Should show path with "mentorship" or "replit-project"
+
+2. Navigate to correct folder
+   - Repeat Step 3 to navigate to project folder
+
+3. Try the command again
+
+---
+
+### ERROR 8: "ERR! 404 Not Found" during `npm install`
+
+**When you see it**: During Step 6 npm install
+
+**What it means**: A package couldn't be downloaded from npm
+
+**Solution**:
+1. Check internet connection
+   - Make sure you're connected to internet
+   - Try opening a website in browser
+
+2. Try again:
+   - Type: `npm install`
+   - Press Enter
+
+3. If still fails:
+   - Type: `npm cache clean --force`
+   - Type: `npm install --force`
+   - Wait for completion
+
+---
+
+### ERROR 9: Page shows blank or "Cannot GET /"
+
+**When you see it**: When opening localhost:5000
+
+**What it means**: Frontend didn't compile or server isn't running properly
+
+**Solution**:
+1. Check terminal window
+   - Look at terminal where `npm run dev` is running
+   - Should show `[express] serving on port 5000`
+   - Look for red error messages
+
+2. Refresh browser
+   - Press F5 in browser
+   - Wait 5 seconds
+
+3. If still blank:
+   - Stop server (Ctrl+C)
+   - Check terminal for errors
+   - Type: `npm run dev` again
+   - Wait 20 seconds for full startup
+   - Refresh browser (F5)
+
+---
+
+### ERROR 10: Login page appears but login doesn't work
+
+**When you see it**: After filling email/password and clicking login
+
+**What it means**: Database connection issue or authentication problem
+
+**Solution**:
+1. Check browser console
+   - Press F12
+   - Look at Console tab
+   - Note any error messages
+
+2. Verify database is set up
+   - Stop server (Ctrl+C)
+   - Run: `npm run db:push`
+   - Should see success message
+   - Run: `npm run dev` again
+
+3. Try creating new account
+   - Click "Sign Up"
+   - Fill in new email and password
+   - Choose a role
+   - Click "Sign Up"
+
+4. If still doesn't work:
+   - Check `.env.local` file
+   - Verify DATABASE_URL is correct
+   - Stop server and start again
+
+---
+
+## QUICK REFERENCE - Terminal Commands
 
 | What to do | Command |
 |-----------|---------|
-| Navigate to folder | `cd /path/to/folder` |
 | Check Node version | `node --version` |
 | Check npm version | `npm --version` |
+| Clear npm cache | `npm cache clean --force` |
 | Install dependencies | `npm install` |
-| Initialize database | `npm run db:push` |
+| Test database connection | `npm run db:push` |
 | Start development server | `npm run dev` |
 | Stop development server | `Ctrl + C` |
-| List files in folder | `ls` (Mac) or `dir` (Windows) |
-| Show current folder path | `pwd` (Mac) or `cd` (Windows) |
+| Navigate to folder | `cd /path/to/folder` |
+| List files | `ls` (Mac) or `dir` (Windows) |
+| Show current folder | `pwd` (Mac) or `cd` (Windows) |
 
 ---
 
-## Need More Help?
+## SUCCESS CHECKLIST
 
-If you get stuck:
-1. Read the error message carefully
-2. Check the Troubleshooting section
-3. Review the steps you completed
-4. Make sure all files are saved correctly
-5. Restart your terminal and try again
+After completing all steps, verify:
+
+- [ ] Node.js installed (`node --version` shows version)
+- [ ] npm working (`npm --version` shows version)
+- [ ] Project dependencies installed (node_modules folder exists)
+- [ ] `.env.local` file created with correct DATABASE_URL
+- [ ] Database initialized (`npm run db:push` succeeded)
+- [ ] Server starts (`npm run dev` shows "serving on port 5000")
+- [ ] Browser opens localhost:5000 without errors
+- [ ] Login/Sign up page loads
+- [ ] Can create account and login
+- [ ] Can navigate app pages without errors
+- [ ] Browser console has no red errors
+
+**If all items are checked**, you're successfully set up! ✓
+
+---
+
+## NEXT STEPS AFTER SETUP
+
+### As a Mentor:
+1. Create your first roadmap with skills
+2. Create a mentee account
+3. Assign your roadmap to the mentee
+4. Add mock interview gates to skills
+5. Monitor mentee progress from dashboard
+
+### As a Mentee:
+1. View your assigned learning roadmap
+2. Complete roadmap items in sequence
+3. Request mock interviews when ready
+4. View earned badges after approval
+5. Track your overall progress percentage
+
+---
+
+## Still Having Issues?
+
+If you're still stuck:
+
+1. **Read error message carefully**
+   - Most error messages tell you exactly what's wrong
+   - Search for the error in this guide
+
+2. **Check each step was completed**
+   - Go back and verify each step
+   - Common skipped steps: Node.js installation, database setup
+
+3. **Check terminal and console**
+   - Open browser console (F12)
+   - Check terminal where server runs
+   - Both show helpful error information
+
+4. **Try a fresh start**
+   - Stop the server (Ctrl+C)
+   - Wait 10 seconds
+   - Run `npm run dev` again
+   - Often fixes temporary issues
+
+5. **Verify connections**
+   - Test Neon database connection: `npm run db:push`
+   - Check internet connection is active
+   - Make sure firewall isn't blocking connections
+
+---
+
+## Need Help With Specific Features?
+
+After setup is complete, refer to:
+
+- **Creating roadmaps**: Mentor dashboard has "Add Skill" button
+- **Adding mentees**: Click "Invite Mentee" in mentor area
+- **Tracking progress**: Check mentee details in "All Students"
+- **Approving work**: Go to "Mock Interview Requests"
+- **Viewing badges**: Mentee can see in "My Badges" page
+- **Payments**: "Payment Portfolio" section in mentor area
+
+---
+
+Good luck with your setup! The application is now ready to use.
