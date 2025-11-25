@@ -18,7 +18,7 @@ console.log('✓ DATABASE_URL loaded successfully');
 console.log('Running drizzle-kit push...\n');
 
 try {
-  execSync('drizzle-kit push', { stdio: 'inherit', cwd: __dirname });
+  execSync('npx drizzle-kit push', { stdio: 'inherit', cwd: __dirname });
   console.log('\n✓ Database migration completed!');
 } catch (error) {
   console.error('\n✗ Migration failed:', error.message);
