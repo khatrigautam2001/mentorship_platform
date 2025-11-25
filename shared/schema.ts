@@ -57,7 +57,8 @@ export const mockInterviewRequests = pgTable("mock_interview_requests", {
 export const badges = pgTable("badges", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   menteeId: varchar("mentee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  skillId: varchar("skill_id").notNull().references(() => skills.id, { onDelete: 'cascade' }),
+  skillId: varchar("skill_id").references(() => skills.id, { onDelete: 'cascade' }),
+  individualSkillId: varchar("individual_skill_id").references(() => individualSkills.id, { onDelete: 'cascade' }),
   awardedAt: timestamp("awarded_at").defaultNow().notNull(),
 });
 

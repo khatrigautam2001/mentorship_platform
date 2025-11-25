@@ -12,12 +12,15 @@ interface BadgeWithSkill extends BadgeType {
 interface BadgesData {
   earnedBadges: BadgeWithSkill[];
   allSkills: Skill[];
+  individualSkills?: any[];
 }
 
 export default function MenteeBadges() {
   const { data: badgesData, isLoading } = useQuery<BadgesData>({
     queryKey: ["/api/mentee/badges"],
   });
+
+  const individualSkills = badgesData?.individualSkills ?? [];
 
   return (
     <div className="space-y-6">
@@ -68,11 +71,11 @@ export default function MenteeBadges() {
             </div>
           )}
 
-          {badgesData.allSkills.length > badgesData.earnedBadges.length && (
+          {(badgesData.allSkills.length + individualSkills.length) > badgesData.earnedBadges.length && (
             <div>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Star className="h-5 w-5 text-muted-foreground" />
-                Locked Badges ({badgesData.allSkills.length - badgesData.earnedBadges.length})
+                Locked Badges ({(badgesData.allSkills.length + individualSkills.length) - badgesData.earnedBadges.length})
               </h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {badgesData.allSkills
@@ -80,6 +83,28 @@ export default function MenteeBadges() {
                     (skill) =>
                       !badgesData.earnedBadges.some(
                         (badge) => badge.skillId === skill.id
+                      )
+                  )
+                  .map((skill) => (
+                    <Card key={skill.id} className="text-center opacity-60">
+                      <CardContent className="p-6">
+                        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted mx-auto mb-4 border-2 border-dashed border-muted-foreground/30">
+                          <Award className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                        <h3 className="font-semibold text-lg text-muted-foreground">
+                          {skill.name} Master
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Complete skill to unlock
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                {individualSkills
+                  .filter(
+                    (skill) =>
+                      !badgesData.earnedBadges.some(
+                        (badge) => badge.individualSkillId === skill.id
                       )
                   )
                   .map((skill) => (

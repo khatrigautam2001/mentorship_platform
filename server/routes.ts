@@ -469,11 +469,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Request not found" });
         }
 
-        // Award badge only if this is a global skill
+        // Award badge for either global or individual skill
         if (request.skillId) {
           await storage.createBadge({
             menteeId: request.menteeId,
             skillId: request.skillId,
+            individualSkillId: null,
+          });
+        } else if (request.individualSkillId) {
+          await storage.createBadge({
+            menteeId: request.menteeId,
+            skillId: null,
+            individualSkillId: request.individualSkillId,
           });
         }
 
@@ -1212,18 +1219,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.session.userId!,
         );
         const allSkills = await storage.getAllSkills();
+        const individualSkills = await storage.getIndividualSkillsByMenteeId(
+          req.session.userId!,
+        );
 
         const badgesWithSkills = badgesList.map((badge) => {
-          const skill = allSkills.find((s) => s.id === badge.skillId);
+          let skillName = "Unknown";
+          if (badge.skillId) {
+            const skill = allSkills.find((s) => s.id === badge.skillId);
+            skillName = skill?.name || "Unknown";
+          } else if (badge.individualSkillId) {
+            const indSkill = individualSkills.find(
+              (s) => s.id === badge.individualSkillId
+            );
+            skillName = indSkill?.name || "Unknown";
+          }
           return {
             ...badge,
-            skillName: skill?.name || "Unknown",
+            skillName,
           };
         });
 
         res.json({
           earnedBadges: badgesWithSkills,
           allSkills,
+          individualSkills,
         });
       } catch (error) {
         console.error("Get badges error:", error);
