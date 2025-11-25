@@ -663,40 +663,67 @@ These tools allow you to backup and restore databases.
 
 ### Detailed Instructions:
 
-1. **In your terminal, run database check**
+**For Windows Users:**
+
+1. **Run database migration with environment loading**
+   - Make sure you're in your project folder
+   - Type: `node load-env-and-push.js`
+   - Press Enter
+
+**For Mac/Linux Users:**
+
+1. **Run database migration**
    - Make sure you're in your project folder
    - Type: `npm run db:push`
    - Press Enter
 
-2. **What should happen**
-   - Terminal will connect to your Neon database
-   - It will create all necessary tables
-   - You should see messages like:
-     ```
-     ✓ [drizzle-kit] Your migration is ready
-     ✓ [drizzle-kit] Changes applied
-     ```
+### What should happen (both platforms)
+- Terminal will connect to your Neon database
+- It will create all necessary tables
+- You should see messages like:
+  ```
+  ✓ [drizzle-kit] Your migration is ready
+  ✓ [drizzle-kit] Changes applied
+  ```
 
-3. **If successful**
-   - Your database is now set up ✓
-   - All tables are created
-   - You can proceed to Step 10
+### ⚠️ Important: Session Table Warning
 
-4. **If you see an error**
-   - **"Error: Unauthorized" or "ECONNREFUSED"**: Connection string is wrong
-     - Go back to Neon
-     - Copy the connection string again carefully
-     - Update `.env.local` file
-     - Try again
-   
-   - **"Error: relation does not exist"**: Database was partially created
-     - This is okay - run the command again
-   
-   - **"error: password authentication failed"**: Password in connection string is wrong
-     - Go to Neon → Settings
-     - Reset the database password
-     - Get new connection string
-     - Update `.env.local`
+When running the migration, you may see this warning:
+
+```
+Warning  Found data-loss statements:
+· You're about to delete session table with X items
+
+THIS ACTION WILL CAUSE DATA LOSS AND CANNOT BE REVERTED
+
+Do you still want to push changes?
+```
+
+**This is SAFE to abort.** The session table is created automatically by the application at runtime. If you see this warning:
+- **Type `n` or `x` to abort** (don't push)
+- This is expected behavior ✓
+- The app will recreate the table when it starts
+
+### If successful
+- Your database is now set up ✓
+- All tables are created
+- You can proceed to Step 11
+
+### If you see an error
+- **"Error: Unauthorized" or "ECONNREFUSED"**: Connection string is wrong
+  - Go back to Neon
+  - Copy the connection string again carefully
+  - Update `.env.local` file
+  - Try again
+
+- **"Error: relation does not exist"**: Database was partially created
+  - This is okay - run the command again
+
+- **"error: password authentication failed"**: Password in connection string is wrong
+  - Go to Neon → Settings
+  - Reset the database password
+  - Get new connection string
+  - Update `.env.local`
 
 ---
 
@@ -705,12 +732,25 @@ These tools allow you to backup and restore databases.
 ### What you need:
 - Terminal in project folder
 - All previous steps completed successfully
+- `load-env-and-run-dev.js` script (for Windows users)
 
 ### Why this step:
 - This starts the backend and frontend servers
 - Makes the app accessible at localhost:5000
 
 ### Detailed Instructions:
+
+**For Windows Users:**
+
+1. **Make sure you're in the project folder**
+   - Terminal should show your project path
+   - If not, repeat Step 3
+
+2. **Start the development server with environment loading**
+   - Type exactly: `node load-env-and-run-dev.js`
+   - Press Enter
+
+**For Mac/Linux Users:**
 
 1. **Make sure you're in the project folder**
    - Terminal should show your project path
@@ -720,28 +760,28 @@ These tools allow you to backup and restore databases.
    - Type exactly: `npm run dev`
    - Press Enter
 
-3. **Wait for startup**
-   - Terminal will show startup messages
-   - This takes about 10-20 seconds
-   - Look for messages like:
-     ```
-     > rest-express@1.0.0 dev
-     > NODE_ENV=development tsx server/index-dev.ts
-     ```
+### What should happen (both platforms)
+- Terminal will show startup messages
+- This takes about 10-20 seconds
+- You should see:
+  ```
+  ✓ Environment loaded
+  Starting development server...
+  ```
 
-4. **Look for success message**
+3. **Look for success message**
    - After a few seconds, you should see:
      ```
      [express] serving on port 5000
      ```
    - This means the server is running ✓
 
-5. **What you should NOT see**
+4. **What you should NOT see**
    - Red error messages with "ERROR" in them
    - "port 5000 is already in use" (see troubleshooting if you see this)
    - "Cannot find module" errors
 
-6. **Keep this terminal window open**
+5. **Keep this terminal window open**
    - **DO NOT close this window** while using the app
    - Your server needs to keep running
    - You can minimize it but don't close it
@@ -1112,9 +1152,10 @@ These tools allow you to backup and restore databases.
 
 2. Verify database is set up
    - Stop server (Ctrl+C)
-   - Run: `npm run db:push`
+   - For Windows: `node load-env-and-push.js`
+   - For Mac/Linux: `npm run db:push`
    - Should see success message
-   - Run: `npm run dev` again
+   - Start server again
 
 3. Try creating new account
    - Click "Sign Up"
@@ -1129,7 +1170,53 @@ These tools allow you to backup and restore databases.
 
 ---
 
+### ERROR 11: "NODE_ENV is not recognized as an internal or external command" (Windows)
+
+**When you see it**: When trying to run `npm run dev` on Windows
+
+**What it means**: PowerShell on Windows doesn't support Unix-style environment variable syntax
+
+**Solution**:
+1. **Use the provided script instead**
+   - Stop any running server (Ctrl+C)
+   - Type: `node load-env-and-run-dev.js`
+   - Press Enter
+   - This script loads the environment properly on Windows
+
+2. **Why this happens**:
+   - Windows PowerShell uses different syntax than Mac/Linux
+   - `NODE_ENV=development` works on Mac/Linux but not Windows
+   - The script handles this automatically for you
+
+3. **If script doesn't exist**:
+   - Verify `load-env-and-run-dev.js` is in your project folder
+   - Compare with Mac/Linux users
+   - Ask them to send you the script file
+
+---
+
+### ERROR 12: Database migration - "drizzle-kit is not recognized" (Windows)
+
+**When you see it**: When running `npm run db:push` on Windows
+
+**What it means**: PowerShell can't find drizzle-kit command
+
+**Solution**:
+1. **Use the provided script instead**
+   - Type: `node load-env-and-push.js`
+   - Press Enter
+   - This handles environment setup for Windows
+
+2. **If script doesn't exist**:
+   - Verify `load-env-and-push.js` is in your project folder
+   - Make sure it's in the same location as `package.json`
+   - Re-download project if missing
+
+---
+
 ## QUICK REFERENCE - Terminal Commands
+
+### Universal Commands (Windows, Mac, Linux)
 
 | What to do | Command |
 |-----------|---------|
@@ -1137,12 +1224,26 @@ These tools allow you to backup and restore databases.
 | Check npm version | `npm --version` |
 | Clear npm cache | `npm cache clean --force` |
 | Install dependencies | `npm install` |
-| Test database connection | `npm run db:push` |
-| Start development server | `npm run dev` |
 | Stop development server | `Ctrl + C` |
 | Navigate to folder | `cd /path/to/folder` |
 | List files | `ls` (Mac) or `dir` (Windows) |
 | Show current folder | `pwd` (Mac) or `cd` (Windows) |
+
+### Mac/Linux Commands
+
+| What to do | Command |
+|-----------|---------|
+| Test database connection | `npm run db:push` |
+| Start development server | `npm run dev` |
+
+### Windows Commands (PowerShell)
+
+| What to do | Command |
+|-----------|---------|
+| Test database connection | `node load-env-and-push.js` |
+| Start development server | `node load-env-and-run-dev.js` |
+
+**Note:** Windows PowerShell doesn't support Unix-style environment variables (like `NODE_ENV=value`), so use the provided `.js` scripts instead.
 
 ---
 
@@ -1154,8 +1255,12 @@ After completing all steps, verify:
 - [ ] npm working (`npm --version` shows version)
 - [ ] Project dependencies installed (node_modules folder exists)
 - [ ] `.env.local` file created with correct DATABASE_URL
-- [ ] Database initialized (`npm run db:push` succeeded)
-- [ ] Server starts (`npm run dev` shows "serving on port 5000")
+- [ ] Database initialized:
+  - Windows: `node load-env-and-push.js` succeeded
+  - Mac/Linux: `npm run db:push` succeeded
+- [ ] Server starts:
+  - Windows: `node load-env-and-run-dev.js` shows "serving on port 5000"
+  - Mac/Linux: `npm run dev` shows "serving on port 5000"
 - [ ] Browser opens localhost:5000 without errors
 - [ ] Login/Sign up page loads
 - [ ] Can create account and login
