@@ -4,6 +4,23 @@ This guide will walk you through every single step to get the application runnin
 
 ---
 
+## QUICK SUMMARY - Critical Setup Order
+
+**To avoid all errors, follow this exact order:**
+
+1. **Steps 1-7**: Download project, extract files, install Node.js, install dependencies, set up Neon database
+2. **Step 8**: (Optional) Migrate data from Replit
+3. **Step 9**: Create `.env.local` file with DATABASE_URL
+4. **🔴 STEP 10 - CRITICAL**: Create session table in Neon (if you skip this, you get "session does not exist" error)
+5. **Step 11**: (Optional) Add individual_skill_id columns if migrating from Replit
+6. **Step 12**: Run database migration (npm run db:push)
+7. **Step 13**: Start the development server (Windows: `node load-env-and-run-dev.js`, Mac: `npm run dev`)
+8. **Steps 14-17**: Open browser, login, test app
+
+**Windows Users**: You MUST use `node load-env-and-run-dev.js` instead of `npm run dev` because PowerShell doesn't support `NODE_ENV=value` syntax.
+
+---
+
 ## PRE-FLIGHT CHECKLIST
 
 Before you start, make sure you have:
@@ -667,60 +684,115 @@ After migrating data from Replit to Neon, you need to add columns that support i
 
 ---
 
-## STEP 10: Test Database Connection (RECOMMENDED)
+## STEP 10: Create Session Table in Neon (CRITICAL - Do This First!)
+
+### ⚠️ IMPORTANT: This step MUST be done BEFORE starting the app
+
+The session table is required for user login and session management. If you skip this, you'll get "relation session does not exist" error.
+
+### What you need:
+- Access to your Neon database
+- Your Neon project created from Step 7
+
+### Detailed Instructions:
+
+1. **Go to your Neon SQL Editor**
+   - Log in to https://console.neon.tech
+   - Select your project
+   - Click on the "SQL Editor" or "Query Editor" tab
+
+2. **Copy and paste this SQL code:**
+   ```sql
+   CREATE TABLE IF NOT EXISTS "session" (
+     "sid" varchar PRIMARY KEY,
+     "sess" json NOT NULL,
+     "expire" timestamp(6) NOT NULL
+   );
+   
+   CREATE INDEX IF NOT EXISTS "IDX_session_expire" on "session" ("expire");
+   ```
+
+3. **Execute the query**
+   - Click "Run" or press the execute button
+   - You should see: `CREATE TABLE` and `CREATE INDEX` in the output
+   - This confirms the session table was created ✓
+
+---
+
+## STEP 11: Add Missing Database Columns (If Migrating from Replit)
+
+### When to do this step:
+- You are migrating existing data from Replit to Neon
+- You've already imported your data using Step 8
+- Skip this if you're starting fresh with no data
+
+### What you need:
+- Access to your Neon database SQL Editor
+- The table data imported from your backup
+
+### Detailed Instructions:
+
+1. **In your Neon SQL Editor, run these commands:**
+   ```sql
+   ALTER TABLE badges ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+   ALTER TABLE mock_interview_requests ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+   ```
+
+2. **Execute the query**
+   - You should see: `ALTER TABLE` messages
+   - These columns support custom individual skills for mentees
+
+3. **Verify success**
+   - Both commands should complete without errors
+   - Your database is now fully compatible with the app ✓
+
+---
+
+## STEP 12: Test Database Connection
 
 ### What you need:
 - `.env.local` file from Step 9
 - Terminal in your project folder
 - Node.js installed
 
-### Why this step:
-- Verifies your database connection works BEFORE starting the app
-- Prevents "database connection" errors later
-- Takes only 1 minute
+### ⚠️ IMPORTANT: The session table MUST exist before this step
 
 ### Detailed Instructions:
 
 **For Windows Users:**
 
-1. **Run database migration with environment loading**
-   - Make sure you're in your project folder
+1. **Make sure you're in your project folder**
+   - Terminal should show your project path
+
+2. **Run database migration with environment loading**
    - Type: `node load-env-and-push.js`
    - Press Enter
 
+3. **What should happen**
+   - Terminal will connect to your Neon database
+   - It will create all necessary application tables
+   - You should see messages like:
+     ```
+     ✓ DATABASE_URL loaded successfully
+     Running drizzle-kit push...
+     [✓] Changes applied
+     ```
+
 **For Mac/Linux Users:**
 
-1. **Run database migration**
-   - Make sure you're in your project folder
+1. **Make sure you're in your project folder**
+
+2. **Run database migration**
    - Type: `npm run db:push`
    - Press Enter
 
-### What should happen (both platforms)
-- Terminal will connect to your Neon database
-- It will create all necessary tables
-- You should see messages like:
-  ```
-  ✓ [drizzle-kit] Your migration is ready
-  ✓ [drizzle-kit] Changes applied
-  ```
+3. **What should happen**
+   - Terminal will create all necessary tables
+   - Should complete without errors
 
-### ⚠️ Important: Session Table Warning
+### ⚠️ If you see: "relation session does not exist"
 
-When running the migration, you may see this warning:
-
-```
-Warning  Found data-loss statements:
-· You're about to delete session table with X items
-
-THIS ACTION WILL CAUSE DATA LOSS AND CANNOT BE REVERTED
-
-Do you still want to push changes?
-```
-
-**This is SAFE to abort.** The session table is created automatically by the application at runtime. If you see this warning:
-- **Type `n` or `x` to abort** (don't push)
-- This is expected behavior ✓
-- The app will recreate the table when it starts
+**This means you skipped Step 10.** Go back and create the session table in Neon first, then try again.
 
 ### If successful
 - Your database is now set up ✓
@@ -745,12 +817,14 @@ Do you still want to push changes?
 
 ---
 
-## STEP 11: Start the Development Server
+## STEP 13: Start the Development Server
 
 ### What you need:
 - Terminal in project folder
-- All previous steps completed successfully
-- `load-env-and-run-dev.js` script (for Windows users)
+- All previous steps completed successfully (Steps 1-12)
+- Database and session table created
+
+### ⚠️ CRITICAL: If you skipped Steps 10 or 12, the app will crash with session errors
 
 ### Why this step:
 - This starts the backend and frontend servers
@@ -761,53 +835,68 @@ Do you still want to push changes?
 **For Windows Users:**
 
 1. **Make sure you're in the project folder**
-   - Terminal should show your project path
+   - Terminal should show your project path (where package.json is)
    - If not, repeat Step 3
 
 2. **Start the development server with environment loading**
    - Type exactly: `node load-env-and-run-dev.js`
    - Press Enter
+   - Wait 15-20 seconds for startup
+
+3. **What you should see**
+   - ✓ Environment loaded
+   - Starting development server...
+   - Then after a few seconds:
+     ```
+     [express] serving on port 5000
+     ```
 
 **For Mac/Linux Users:**
 
 1. **Make sure you're in the project folder**
-   - Terminal should show your project path
-   - If not, repeat Step 3
 
 2. **Start the development server**
    - Type exactly: `npm run dev`
    - Press Enter
+   - Wait 15-20 seconds for startup
 
-### What should happen (both platforms)
-- Terminal will show startup messages
-- This takes about 10-20 seconds
-- You should see:
-  ```
-  ✓ Environment loaded
-  Starting development server...
-  ```
-
-3. **Look for success message**
-   - After a few seconds, you should see:
+3. **What you should see**
+   - After a few seconds:
      ```
      [express] serving on port 5000
      ```
-   - This means the server is running ✓
 
-4. **What you should NOT see**
-   - Red error messages with "ERROR" in them
-   - "port 5000 is already in use" (see troubleshooting if you see this)
-   - "Cannot find module" errors
+### Success Indicators ✓
+- Server is running on port 5000
+- No red "ERROR" messages in terminal
+- No "relation session does not exist" errors
+- Terminal shows the startup messages
 
-5. **Keep this terminal window open**
-   - **DO NOT close this window** while using the app
-   - Your server needs to keep running
-   - You can minimize it but don't close it
-   - To close later: Go to Step 15
+### What to do if it crashes
+
+**If you see: "relation session does not exist"**
+- Go back to Step 10 and create the session table in Neon
+- Stop the server (Ctrl+C)
+- Try starting again
+
+**If you see: "Cannot find module" errors**
+- You didn't run `npm install` in Step 6
+- Go back and run: `npm install`
+- Then try starting the server again
+
+**If you see: "port 5000 is already in use"**
+- Another app is using port 5000
+- Either close that app, or see Troubleshooting section
+
+### Keep this terminal window open
+- **DO NOT close this window** while using the app
+- Your server needs to keep running
+- You can minimize it but don't close it
+- To close later: Press Ctrl+C
 
 ---
 
-## STEP 12: Open the Application in Your Browser
+## STEP 14: Open the Application in Your Browser
 
 ### What you need:
 - A web browser (Chrome, Firefox, Safari, Edge)
@@ -845,7 +934,7 @@ Do you still want to push changes?
 
 ---
 
-## STEP 13: Create Your Account and Login
+## STEP 15: Create Your Account and Login
 
 ### What you need:
 - The application loaded in browser from Step 11
@@ -896,7 +985,7 @@ Do you still want to push changes?
 
 ---
 
-## STEP 14: Test the Application
+## STEP 16: Test the Application
 
 ### What you need:
 - Logged-in application
@@ -930,7 +1019,7 @@ Do you still want to push changes?
 
 ---
 
-## STEP 15: Stop the Application
+## STEP 17: Stop the Application
 
 ### When you want to stop using the app:
 
@@ -1265,27 +1354,82 @@ Do you still want to push changes?
 
 ---
 
-## SUCCESS CHECKLIST
+## SUCCESS CHECKLIST - Follow This Order
 
-After completing all steps, verify:
+Complete these items in order to avoid errors:
 
+### Pre-Setup (Steps 1-9)
 - [ ] Node.js installed (`node --version` shows version)
 - [ ] npm working (`npm --version` shows version)
-- [ ] Project dependencies installed (node_modules folder exists)
-- [ ] `.env.local` file created with correct DATABASE_URL
-- [ ] Database initialized:
+- [ ] Project downloaded and extracted
+- [ ] Dependencies installed (`npm install` completed)
+- [ ] Neon account created with database project
+- [ ] `.env.local` file created in project folder
+- [ ] DATABASE_URL is correct in `.env.local`
+
+### 🔴 CRITICAL - Session Table (Step 10)
+- [ ] Logged into https://console.neon.tech
+- [ ] Session table created in Neon database using SQL:
+  ```sql
+  CREATE TABLE IF NOT EXISTS "session" (
+    "sid" varchar PRIMARY KEY,
+    "sess" json NOT NULL,
+    "expire" timestamp(6) NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS "IDX_session_expire" on "session" ("expire");
+  ```
+- [ ] SQL commands executed successfully in Neon
+
+### Optional - Data Migration (Steps 8, 11)
+- [ ] (Optional) Data migrated from Replit to Neon
+- [ ] (If migrated) Individual skill columns added:
+  ```sql
+  ALTER TABLE badges ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+  ALTER TABLE mock_interview_requests ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+  ```
+
+### Database Setup (Step 12)
+- [ ] Database migration completed:
   - Windows: `node load-env-and-push.js` succeeded
   - Mac/Linux: `npm run db:push` succeeded
-- [ ] Server starts:
-  - Windows: `node load-env-and-run-dev.js` shows "serving on port 5000"
-  - Mac/Linux: `npm run dev` shows "serving on port 5000"
-- [ ] Browser opens localhost:5000 without errors
-- [ ] Login/Sign up page loads
-- [ ] Can create account and login
-- [ ] Can navigate app pages without errors
-- [ ] Browser console has no red errors
+- [ ] No "relation session does not exist" errors
 
-**If all items are checked**, you're successfully set up! ✓
+### Development Server (Step 13)
+- [ ] Server started successfully:
+  - Windows: `node load-env-and-run-dev.js`
+  - Mac/Linux: `npm run dev`
+- [ ] Terminal shows `[express] serving on port 5000`
+- [ ] No red ERROR messages in terminal
+
+### Application (Steps 14-15)
+- [ ] Browser opens localhost:5000
+- [ ] Login page appears
+- [ ] Can create new account (sign up)
+- [ ] Can login with credentials
+- [ ] Can see mentor/mentee dashboard
+
+**If ALL items are checked ✓, you're ready to use the app!**
+
+---
+
+## If You Encounter Errors
+
+### "relation session does not exist" Error
+- You skipped Step 10
+- Solution: Go back and create the session table in Neon following Step 10 exactly
+- Then stop server and try again
+
+### "NODE_ENV is not recognized" Error (Windows)
+- You used `npm run dev` instead of the correct script
+- Solution: Use `node load-env-and-run-dev.js` instead
+
+### "Cannot find module" Errors
+- You skipped `npm install` in Step 6
+- Solution: Run `npm install` and wait for completion, then try again
+
+### Database connection errors
+- Database URL is wrong or `.env.local` doesn't exist
+- Solution: Go back to Step 9 and verify `.env.local` has the correct DATABASE_URL
 
 ---
 
