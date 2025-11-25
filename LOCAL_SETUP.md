@@ -9,11 +9,11 @@ This guide will walk you through every single step to get the application runnin
 **To avoid all errors, follow this exact order:**
 
 1. **Steps 1-7**: Download project, extract files, install Node.js, install dependencies, set up Neon database
-2. **Step 8**: (Optional) Migrate data from Replit
+2. **Step 8**: (Optional) Migrate data from Replit only if you have existing data
 3. **Step 9**: Create `.env.local` file with DATABASE_URL
 4. **🔴 STEP 10 - CRITICAL**: Create session table in Neon (if you skip this, you get "session does not exist" error)
-5. **Step 11**: (Optional) Add individual_skill_id columns if migrating from Replit
-6. **Step 12**: Run database migration (npm run db:push)
+5. **Step 11**: Just informational - schema already defines all columns, migration handles them
+6. **Step 12**: Run database migration (npm run db:push) - this creates ALL tables and adds all columns automatically
 7. **Step 13**: Start the development server (Windows: `node load-env-and-run-dev.js`, Mac: `npm run dev`)
 8. **Steps 14-17**: Open browser, login, test app
 
@@ -719,32 +719,25 @@ The session table is required for user login and session management. If you skip
 
 ---
 
-## STEP 11: Add Missing Database Columns (If Migrating from Replit)
+## STEP 11: Database Migration Will Handle Missing Columns Automatically
 
-### When to do this step:
-- You are migrating existing data from Replit to Neon
-- You've already imported your data using Step 8
-- Skip this if you're starting fresh with no data
+### How it works:
+- Your Drizzle schema already defines `individualSkillId` columns in both `badges` and `mock_interview_requests` tables
+- When you run `npm run db:push` in Step 12, it compares your schema with the database
+- If columns are missing, `drizzle-kit` automatically adds them
 
-### What you need:
-- Access to your Neon database SQL Editor
-- The table data imported from your backup
+### If you migrated from Replit:
+- If the columns still don't exist after Step 12, run this in your Neon SQL Editor:
+  ```sql
+  ALTER TABLE badges ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+  ALTER TABLE mock_interview_requests ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
+  ```
+- But this should rarely be needed - `npm run db:push` usually handles it
 
-### Detailed Instructions:
-
-1. **In your Neon SQL Editor, run these commands:**
-   ```sql
-   ALTER TABLE badges ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
-   ALTER TABLE mock_interview_requests ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
-   ```
-
-2. **Execute the query**
-   - You should see: `ALTER TABLE` messages
-   - These columns support custom individual skills for mentees
-
-3. **Verify success**
-   - Both commands should complete without errors
-   - Your database is now fully compatible with the app ✓
+### Why you might need manual ALTER:
+- Only if `pg_dump` from Replit captured the OLD schema before columns were added
+- And `drizzle-kit` doesn't detect them during migration
+- Most of the time, Step 12 takes care of everything ✓
 
 ---
 
@@ -1380,13 +1373,8 @@ Complete these items in order to avoid errors:
   ```
 - [ ] SQL commands executed successfully in Neon
 
-### Optional - Data Migration (Steps 8, 11)
-- [ ] (Optional) Data migrated from Replit to Neon
-- [ ] (If migrated) Individual skill columns added:
-  ```sql
-  ALTER TABLE badges ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
-  ALTER TABLE mock_interview_requests ADD COLUMN IF NOT EXISTS individual_skill_id varchar;
-  ```
+### Optional - Data Migration (Step 8)
+- [ ] (Optional) Data migrated from Replit to Neon using pg_dump and psql
 
 ### Database Setup (Step 12)
 - [ ] Database migration completed:
