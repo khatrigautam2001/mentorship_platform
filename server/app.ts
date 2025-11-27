@@ -25,6 +25,10 @@ export function log(message: string, source = "express") {
 
 export const app = express();
 
+// ⭐ Render/Heroku jaisi proxy ke peeche jab secure cookies use karte ho,
+//    ye line BAHUT important hai. Session se PEHLE honi chahiye.
+app.set("trust proxy", 1 as any);
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
